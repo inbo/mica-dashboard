@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/3.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.1/ref/settings/
 """
-
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -125,3 +125,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
 STATIC_URL = '/static/'
+
+DATASET_CONFIG = (
+    {'gbif_id': 'b7ee2a4d-8e10-410f-a951-a7f032678ffe', 'name': 'Muskrat captures in Flanders, Belgium', 'catches': True },
+)
+
+# A (writable by Django) directory where GBIF datasets are temporarily stored before their ingestion
+DATASET_TEMPORARY_DIR = os.path.join(BASE_DIR, 'initial_datasets_temp')
