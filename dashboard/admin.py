@@ -1,8 +1,8 @@
-from django.contrib import admin
+from django.contrib.gis import admin
 from .models import Occurrence, Species, Dataset
 
 
-class OccurrenceAdmin(admin.ModelAdmin):
+class OccurrenceAdmin(admin.OSMGeoAdmin):
     list_display = ('gbif_id', 'species', 'source_dataset')
 
 
