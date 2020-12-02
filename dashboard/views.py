@@ -1,6 +1,5 @@
 import csv
 
-from django.core.serializers import serialize
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.views.decorators.cache import cache_page
