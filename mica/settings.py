@@ -126,6 +126,13 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
+    }
+}
+
 DATASET_CONFIG = (
     {'gbif_id': 'b7ee2a4d-8e10-410f-a951-a7f032678ffe', 'name': 'Muskrat captures in Flanders, Belgium', 'catches': True },
 )

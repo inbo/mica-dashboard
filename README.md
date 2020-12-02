@@ -13,6 +13,12 @@ Run management command:
     $ docker-compose run web python manage.py <DJANGO_COMMAND>
 
 # TODO:
+- Map perf issues:
+    - Backend: smaller GeoJSON file
+    - Backend: does caching works well (parameters?) invalidate on data load? Use memcache?
+    - Frontend: clustering?
+- Map: implement heatmap?
+
 - Adapt docker-compose configuration for production:
     - add nginx
     - replace dev server by gunicorn

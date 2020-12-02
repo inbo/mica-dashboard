@@ -1,6 +1,7 @@
 from django.core.serializers import serialize
 from django.http import HttpResponse
 from django.shortcuts import render
+from django.views.decorators.cache import cache_page
 
 from .models import Occurrence
 
@@ -9,6 +10,7 @@ def index(request):
     return render(request, "dashboard/index.html")
 
 
+@cache_page(60 * 15)
 def occurrences_geojson(request):
     g= serialize('geojson', Occurrence.objects.all(),
                  geometry_field='location',
