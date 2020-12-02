@@ -1,3 +1,5 @@
+import csv
+
 from django.core.serializers import serialize
 from django.http import HttpResponse
 from django.shortcuts import render
@@ -14,5 +16,18 @@ def index(request):
 def occurrences_geojson(request):
     g= serialize('geojson', Occurrence.objects.all(),
                  geometry_field='location',
-                 fields=('gbif_id',))
+                 fields=('pk',))
     return HttpResponse(g, content_type='application/json')
+
+
+def occurrences_csv(request):
+    # Create the HttpResponse object with the appropriate CSV header.
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'inline'
+
+    writer = csv.writer(response)
+    for o in Occurrence.objects.all():
+        if o.location:
+            writer.writerow([o.pk, o.location.x, o.location.y])
+
+    return response

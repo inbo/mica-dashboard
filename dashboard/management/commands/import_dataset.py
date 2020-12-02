@@ -1,15 +1,24 @@
 import datetime
+import math
 import os
 from pathlib import Path
 
+from django.conf import settings
 from django.contrib.gis.geos import Point
+from django.core.management.base import BaseCommand
 from dwca.darwincore.utils import qualname as qn
 from dwca.read import DwCAReader
 
-from django.conf import settings
-from django.core.management.base import BaseCommand
-
 from dashboard.models import Dataset, Occurrence, Species
+
+# Number of decimal places kept in the coordinates (3 = 111m accuracy at the equator => better in Belgium). This is done
+# for permormance reasons (GeoJSON file size).
+COORDINATES_DECIMAL_PLACES = 3
+
+
+def truncate(number, digits) -> float:
+    stepper = 10.0 ** digits
+    return math.trunc(stepper * number) / stepper
 
 
 def _path_for_dataset(gbif_dataset_id: str):
@@ -35,7 +44,7 @@ class Command(BaseCommand):
         except Dataset.DoesNotExist:
             self.stdout.write("No previous dataset with this ID in the database => nothing to delete")
 
-    def _ingest_dataset(self, gbif_dataset_id: str, dataset_name: str, catches:bool):
+    def _ingest_dataset(self, gbif_dataset_id: str, dataset_name: str, catches: bool):
         with DwCAReader(_path_for_dataset(gbif_dataset_id)) as dwca:
             self.stdout.write(self.style.SUCCESS('Ok, dataset successfully opened'))
 
@@ -46,8 +55,8 @@ class Command(BaseCommand):
 
                 # Some catches have no location...
                 try:
-                    point = Point(float(row.data[qn('decimalLongitude')]),
-                                  float(row.data[qn('decimalLatitude')]))
+                    point = Point(truncate(float(row.data[qn('decimalLongitude')]), COORDINATES_DECIMAL_PLACES),
+                                  truncate(float(row.data[qn('decimalLatitude')]), COORDINATES_DECIMAL_PLACES))
                 except ValueError:
                     point = None
 
@@ -58,7 +67,7 @@ class Command(BaseCommand):
                     day = int(row.data[qn('day')])
                 except ValueError:
                     month = 1
-                    day= 1
+                    day = 1
                 date = datetime.date(year, month, day)
 
                 Occurrence.objects.create(
@@ -90,13 +99,13 @@ class Command(BaseCommand):
         dataset_config_entry = next(
             (item for item in settings.DATASET_CONFIG if item["gbif_id"] == dataset_id), None)
 
-        if dataset_config_entry: # Okay, we have some configuration for this dataset:
+        if dataset_config_entry:  # Okay, we have some configuration for this dataset:
             if (not _dataset_download_exists(dataset_id)) or options['force_download']:
                 self._download_dataset(dataset_id)
 
             self._delete_dataset_and_related_data(dataset_id)
             self._ingest_dataset(dataset_id,
-                                 dataset_name = dataset_config_entry['name'],
+                                 dataset_name=dataset_config_entry['name'],
                                  catches=dataset_config_entry['catches'])
 
         else:

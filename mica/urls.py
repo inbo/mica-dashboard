@@ -21,5 +21,6 @@ from dashboard import views
 urlpatterns = [
     path('', views.index, name="dashboard-index"),
     path('occurrences_geojson/', views.occurrences_geojson, name="dashboard-occurrences_geojson"),
+    path('occurrences_csv/', views.occurrences_csv, name="dashboard-occurrences_csv"),
     path('admin/', admin.site.urls),
 ]

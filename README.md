@@ -14,7 +14,7 @@ Run management command:
 
 # TODO:
 - Map perf issues:
-    - Backend: smaller GeoJSON file
+    - Backend: smaller GeoJSON file. CSV? Stream it?
     - Backend: does caching works well (parameters?) invalidate on data load? Use memcache?
     - Frontend: clustering?
 - Map: implement heatmap?
