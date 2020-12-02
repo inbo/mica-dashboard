@@ -1,3 +1,11 @@
-from django.shortcuts import render
+from django.core.serializers import serialize
+from django.http import HttpResponse
 
-# Create your views here.
+from .models import Occurrence
+
+
+def occurrences_geojson(request):
+    g= serialize('geojson', Occurrence.objects.all(),
+                 geometry_field='location',
+                 fields=('gbif_id',))
+    return HttpResponse(g, content_type='application/json')
