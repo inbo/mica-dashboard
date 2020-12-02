@@ -19,6 +19,7 @@ from django.urls import path
 from dashboard import views
 
 urlpatterns = [
+    path('', views.index, name="dashboard-index"),
+    path('occurrences_geojson/', views.occurrences_geojson, name="dashboard-occurrences_geojson"),
     path('admin/', admin.site.urls),
-    path('occurrences_geojson/', views.occurrences_geojson, name="dashboard-occurrences_geojson")
 ]

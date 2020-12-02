@@ -1,0 +1,39 @@
+{% extends "dashboard/base.html" %}
+
+{% block extrahead %}
+    <style>
+      .map {
+        height: 640px;
+        width: 100%;
+      }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="row">
+        <div class="col"><h1>Rats data</h1></div>
+    </div>
+
+    <div class="row">
+        <div class="col">
+            <div id="map" class="map"></div>
+        </div>
+    </div>
+
+
+    <script type="text/javascript">
+
+      var map = new ol.Map({
+        target: 'map',
+        layers: [
+          new ol.layer.Tile({
+            source: new ol.source.OSM()
+          })
+        ],
+        view: new ol.View({
+          center: ol.proj.fromLonLat([4.67, 50.63]),
+          zoom: 8
+        })
+      });
+    </script>
+{% endblock %}
