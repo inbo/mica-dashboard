@@ -13,13 +13,6 @@ def index(request):
 
 
 @cache_page(60 * 15)
-def occurrences_geojson(request):
-    g= serialize('geojson', Occurrence.objects.all(),
-                 geometry_field='location',
-                 fields=('pk',))
-    return HttpResponse(g, content_type='application/json')
-
-
 def occurrences_csv(request):
     # Create the HttpResponse object with the appropriate CSV header.
     response = HttpResponse(content_type='text/csv')
