@@ -24,5 +24,9 @@ class Occurrence(models.Model):
     individual_count = models.IntegerField(default=1)
     date = models.DateField()
     location = models.PointField(blank=True, null=True)
+    municipality = models.CharField(max_length=100, blank=True)
+    coordinates_uncertainty = models.FloatField(blank=True, null=True) # in meters
+    georeference_remarks = models.TextField(blank=True)
+
 
 

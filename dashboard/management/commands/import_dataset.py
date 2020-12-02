@@ -67,7 +67,10 @@ class Command(BaseCommand):
                     source_dataset=dataset,
                     individual_count=row.data[qn('individualCount')],
                     date=date,
-                    location=point
+                    location=point,
+                    coordinates_uncertainty=float(row.data[qn('coordinateUncertaintyInMeters')]),
+                    municipality=row.data[qn('municipality')],
+                    georeference_remarks=row.data[qn('georeferenceRemarks')]
                 )
 
                 self.stdout.write(".", ending='')
