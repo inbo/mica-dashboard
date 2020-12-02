@@ -11,7 +11,7 @@ def index(request):
     return render(request, "dashboard/index.html")
 
 
-@cache_page(60 * 15)
+@cache_page(60 * 120)
 def occurrences_csv(request):
     # Create the HttpResponse object with the appropriate CSV header.
     response = HttpResponse(content_type='text/csv')

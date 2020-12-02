@@ -18,6 +18,7 @@ Run management command:
     - Backend: does caching works well (parameters?) invalidate on data load? Use memcache?
     - Frontend: clustering?
     - Frontend: VectorTile is optimized for rendering, use instead of vectorSource
+    - see webGL example, very similar
 - Map: implement heatmap?
 
 - Adapt docker-compose configuration for production:

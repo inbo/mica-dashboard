@@ -81,6 +81,12 @@
                 },
             });
 
+            var heatmapLayer = new ol.layer.Heatmap({
+                source: vectorSource,
+                blur: 20,
+                radius: 2,
+
+            });
 
             var map = new ol.Map({
                 target: 'map',
@@ -88,7 +94,8 @@
                     new ol.layer.Tile({
                         source: new ol.source.OSM()
                     }),
-                    clusterLayer
+                    clusterLayer,
+                    heatmapLayer
                 ],
                 view: new ol.View({
                     center: ol.proj.fromLonLat([4.67, 50.63]),
