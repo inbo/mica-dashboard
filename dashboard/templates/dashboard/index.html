@@ -16,7 +16,7 @@
     <div class="row">
         <div class="col">
             <div id="app">
-                <dashboard-map v-if="occurrences" :occurrences="occurrences"></dashboard-map>
+                <dashboard-map v-if="occurrences" :occurrences="occurrences" initial-lat="50.63" initial-lon="4.67" initial-zoom="8"></dashboard-map>
             </div>
         </div>
     </div>
@@ -30,7 +30,7 @@
                 data() {
                     return {
                         occurrencesCsvUrl: "{% url 'dashboard-occurrences_csv' %}",
-                        occurrences: null
+                        occurrences: null // Array of objects: [{id: 1234, lon: 5.32, lat:50.12}, ...]
                     }
                 },
                 mounted() {
@@ -44,9 +44,9 @@
                             url: this.occurrencesCsvUrl,
                             dataType: "text"
                         }).done(function (data) {
-                            var dataArray = data.split('\n');
+                            var dataLines = data.split('\n');
                             var newOccurrences = []
-                            dataArray.forEach(function (row) {
+                            dataLines.forEach(function (row) {
                                 var splitted = row.split(',')
                                 newOccurrences.push({id: splitted[0], lon: splitted[1], lat:splitted[2]});
                             });
