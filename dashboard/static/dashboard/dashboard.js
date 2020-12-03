@@ -1,5 +1,5 @@
 Vue.component('dashboard-map', {
-    props: ['occurrencesCsvUrl'],
+    props: ['occurrences'],
     data: function () {
         return {}
     },
@@ -7,25 +7,13 @@ Vue.component('dashboard-map', {
         var vm = this;
         var vectorSource = new ol.source.Vector({
             loader: function (extent, resolution, projection) {
-
-                $.ajax({
-                    url: vm.occurrencesCsvUrl,
-                    dataType: "text"
-                }).done(function (data) {
-                    var dataArray = data.split('\n');
-                    var allFeatures = []
-                    dataArray.forEach(function (row) {
-                        var splitted = row.split(',')
-                        var id = splitted[0];
-                        var lon = splitted[1];
-                        var lat = splitted[2];
-
-                        allFeatures.push(new ol.Feature({
-                            geometry: new ol.geom.Point(ol.proj.fromLonLat([lon, lat]))
-                        }))
-                    });
-                    vectorSource.addFeatures(allFeatures);
+                var allFeatures = []
+                vm.occurrences.forEach(function (occ) {
+                    allFeatures.push(new ol.Feature({
+                        geometry: new ol.geom.Point(ol.proj.fromLonLat([occ.lon, occ.lat]))
+                    }))
                 });
+                vectorSource.addFeatures(allFeatures);
             }
         });
 

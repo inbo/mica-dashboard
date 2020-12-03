@@ -16,7 +16,7 @@
     <div class="row">
         <div class="col">
             <div id="app">
-                <dashboard-map :occurrences-csv-url="{% url 'dashboard-occurrences_csv' %}"></dashboard-map>
+                <dashboard-map v-if="occurrences" :occurrences="occurrences"></dashboard-map>
             </div>
         </div>
     </div>
@@ -29,8 +29,32 @@
                 delimiters: ['[[', ']]'],
                 data() {
                     return {
+                        occurrencesCsvUrl: "{% url 'dashboard-occurrences_csv' %}",
+                        occurrences: null
+                    }
+                },
+                mounted() {
+                    this.getAndReplaceOccurrenceData();
+                },
+                methods: {
+                    getAndReplaceOccurrenceData: function () {
+                        var vm = this;
+
+                        $.ajax({
+                            url: this.occurrencesCsvUrl,
+                            dataType: "text"
+                        }).done(function (data) {
+                            var dataArray = data.split('\n');
+                            var newOccurrences = []
+                            dataArray.forEach(function (row) {
+                                var splitted = row.split(',')
+                                newOccurrences.push({id: splitted[0], lon: splitted[1], lat:splitted[2]});
+                            });
+                            vm.occurrences = newOccurrences;
+                        });
                     }
                 }
+
             });
         };
     </script>
