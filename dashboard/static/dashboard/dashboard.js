@@ -1,15 +1,19 @@
 Vue.component('dashboard-map', {
-    props: ['occurrences', 'initialLat', 'initialLon', 'initialZoom'],
+    props: ['occurrences', 'initialLat', 'initialLon', 'initialZoom', 'heatmapBlur'],
     data: function () {
         return {
-            clusterStyleCache: {}
+            clusterStyleCache: {},
+
+            baseLayer: new ol.layer.Tile({
+                source: new ol.source.OSM({url: "http://a.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"})
+            }),
         }
     },
     computed: {
         vectorSource: function () {
             var vm = this;
             var vectorSource = new ol.source.Vector({
-                loader: function (extent, resolution, projection) {
+                loader: function () {
                     var allFeatures = []
                     vm.occurrences.forEach(function (occ) {
                         allFeatures.push(new ol.Feature({
@@ -64,15 +68,10 @@ Vue.component('dashboard-map', {
         heatmapLayer: function () {
             return new ol.layer.Heatmap({
                 source: this.vectorSource,
-                blur: 20,
+                blur: parseInt(this.heatmapBlur),
                 radius: 2,
             });
         },
-        baseLayer: function () {
-            return new ol.layer.Tile({
-                source: new ol.source.OSM({url: "http://a.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"})
-            })
-        }
     },
     methods: {
         initializeMap: function (target) {

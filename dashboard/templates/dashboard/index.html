@@ -16,7 +16,10 @@
     <div class="row">
         <div class="col">
             <div id="app">
-                <dashboard-map v-if="occurrences" :occurrences="occurrences" initial-lat="50.63" initial-lon="4.67" initial-zoom="8"></dashboard-map>
+                <dashboard-map v-if="occurrences" :occurrences="occurrences"
+                               initial-lat="50.63" initial-lon="4.67" initial-zoom="8"
+                               :heatmap-blur="heatmapBlur"
+                ></dashboard-map>
             </div>
         </div>
     </div>
@@ -30,7 +33,9 @@
                 data() {
                     return {
                         occurrencesCsvUrl: "{% url 'dashboard-occurrences_csv' %}",
-                        occurrences: null // Array of objects: [{id: 1234, lon: 5.32, lat:50.12}, ...]
+                        occurrences: null, // Array of objects: [{id: 1234, lon: 5.32, lat:50.12}, ...],
+
+                        heatmapBlur: 20
                     }
                 },
                 mounted() {

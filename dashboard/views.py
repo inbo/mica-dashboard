@@ -18,7 +18,7 @@ def occurrences_csv(request):
     response['Content-Disposition'] = 'inline'
 
     writer = csv.writer(response)
-    for o in Occurrence.objects.all():
+    for o in Occurrence.objects.all()[:1000]:
         if o.location:
             writer.writerow([o.pk, o.location.x, o.location.y])
 
