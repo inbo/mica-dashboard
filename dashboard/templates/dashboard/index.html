@@ -16,9 +16,29 @@
     <div class="row">
         <div class="col">
             <div id="app">
+                <form>
+                    <div class="form-group">
+                        <label for="selectedLayer">Layer type</label>
+                        <select class="form-control" id="selectedLayer" v-model="visibleLayer">
+                            <option>cluster</option>
+                            <option>heatmap</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="heatmapRadius">Heatmap radius</label>
+                        <input id="heatmapRadius" type="range" min="1" max="10" v-model.number="heatmapRadius" :disabled="visibleLayer !== 'heatmap'">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="heatmapBlur">Heatmap radius</label>
+                        <input id="heatmapBlur" type="range" min="1" max="50" v-model.number="heatmapBlur" :disabled="visibleLayer !== 'heatmap'">
+                    </div>
+                </form>
+
                 <dashboard-map v-if="occurrences" :occurrences="occurrences"
-                               initial-lat="50.63" initial-lon="4.67" initial-zoom="8"
+                               :initial-lat="50.63" :initial-lon="4.67" :initial-zoom="8"
                                :heatmap-blur="heatmapBlur" :heatmap-radius="heatmapRadius"
+                               :visible-layer="visibleLayer"
                 ></dashboard-map>
             </div>
         </div>
@@ -35,8 +55,10 @@
                         occurrencesCsvUrl: "{% url 'dashboard-occurrences_csv' %}",
                         occurrences: null, // Array of objects: [{id: 1234, lon: 5.32, lat:50.12}, ...],
 
-                        heatmapBlur: 20,
-                        heatmapRadius: 2
+                        heatmapBlur: 15,
+                        heatmapRadius: 2,
+                        visibleLayer: 'cluster'
+
                     }
                 },
                 mounted() {

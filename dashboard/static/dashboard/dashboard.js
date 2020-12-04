@@ -14,6 +14,8 @@ Vue.component('dashboard-map', {
             type: Number,
             default: 2
         },
+
+        'visibleLayer': String // "cluster" | "heatmap"
     },
     data: function () {
         return {
@@ -23,6 +25,11 @@ Vue.component('dashboard-map', {
         }
     },
     watch: {
+        visibleLayer: {
+            handler: function(val) {
+                this.setLayerVisibility(val);
+            },
+        },
         heatmapBlur: {
             handler: function (val) {
                 this.heatmapLayer.setBlur(val);
@@ -34,11 +41,11 @@ Vue.component('dashboard-map', {
             },
         },
         occurrences: {
-            handler: function (val, oldVal) {
+            handler: function (val) {
                 this.vectorSource.clear(true);
 
                 var allFeatures = []
-                this.occurrences.forEach(function (occ) {
+                val.forEach(function (occ) {
                     allFeatures.push(new ol.Feature({
                         geometry: new ol.geom.Point(ol.proj.fromLonLat([occ.lon, occ.lat]))
                     }))
@@ -62,6 +69,18 @@ Vue.component('dashboard-map', {
         },
     },
     methods: {
+        setLayerVisibility: function (val) {
+            switch(val) {
+                    case "cluster":
+                        this.clusterLayer.setVisible(true);
+                        this.heatmapLayer.setVisible(false);
+                        break;
+                    case "heatmap":
+                        this.clusterLayer.setVisible(false);
+                        this.heatmapLayer.setVisible(true);
+                        break;
+                }
+        },
         createClusterLayer: function () {
             var vm = this;
 
@@ -72,6 +91,7 @@ Vue.component('dashboard-map', {
 
             var l = new ol.layer.Vector({
                 source: clusterSource,
+                visible: false,
                 style: function (feature) {
                     var size = feature.get('features').length;
                     var style = vm.clusterStyleCache[size];
@@ -104,6 +124,7 @@ Vue.component('dashboard-map', {
         createHeatmapLayer: function () {
             var l = new ol.layer.Heatmap({
                 source: this.vectorSource,
+                visible: false,
                 blur: this.heatmapBlur,
                 radius: this.heatmapRadius,
             });
@@ -131,6 +152,7 @@ Vue.component('dashboard-map', {
     mounted() {
         this.map = this.createMap();
         this.map.setTarget(this.$refs['map-root']); // Assign the map to div and display
+        this.setLayerVisibility(this.visibleLayer);
     },
     template: '<div id="map" class="map" ref="map-root" style="height: 640px; width: 100%;"></div>'
 })
