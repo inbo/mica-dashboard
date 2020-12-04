@@ -19,7 +19,6 @@ Run management command:
     - Frontend: clustering?
     - Frontend: VectorTile is optimized for rendering, use instead of vectorSource
     - see webGL example, very similar
-- Map: implement heatmap?
 
 - Adapt docker-compose configuration for production:
     - add nginx

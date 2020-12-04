@@ -3,36 +3,39 @@ Vue.component('dashboard-map', {
     data: function () {
         return {
             clusterStyleCache: {},
-
-            baseLayer: new ol.layer.Tile({
-                source: new ol.source.OSM({url: "http://a.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"})
-            }),
+            map: null,
+            vectorSource: new ol.source.Vector(),
         }
     },
-    computed: {
-        vectorSource: function () {
-            var vm = this;
-            var vectorSource = new ol.source.Vector({
-                loader: function () {
-                    var allFeatures = []
-                    vm.occurrences.forEach(function (occ) {
-                        allFeatures.push(new ol.Feature({
-                            geometry: new ol.geom.Point(ol.proj.fromLonLat([occ.lon, occ.lat]))
-                        }))
-                    });
-                    vectorSource.addFeatures(allFeatures);
-                }
-            });
-
-            return vectorSource;
+    watch: {
+        heatmapBlur: {
+            handler: function (val, oldVal) {
+                this.heatmapLayerFromMap.setBlur(parseInt(val));
+            },
         },
+        occurrences: {
+            handler: function (val, oldVal) {
+                this.vectorSource.clear(true);
+
+                var allFeatures = []
+                this.occurrences.forEach(function (occ) {
+                    allFeatures.push(new ol.Feature({
+                        geometry: new ol.geom.Point(ol.proj.fromLonLat([occ.lon, occ.lat]))
+                    }))
+                });
+                this.vectorSource.addFeatures(allFeatures);
+
+            },
+            immediate: true
+        },
+    },
+    computed: {
         clusterSource: function () {
             return new ol.source.Cluster({
                 distance: 40,
                 source: this.vectorSource,
             });
         },
-
         clusterLayer: function () {
             var vm = this;
 
@@ -65,20 +68,29 @@ Vue.component('dashboard-map', {
                 },
             });
         },
-        heatmapLayer: function () {
-            return new ol.layer.Heatmap({
+        heatmapLayerFromMap: function() {
+            console.log("getLAyers out", this.map.getLayers());
+            return this.map.getLayers().getArray().find(function(l) {
+                return (l.get('name') == 'heatmapLayer')
+            });
+        },
+        heatmapLayer: function () { // For creation... replace by a simple method (then we can rename heatmapLayerFromMap -> heatmapLayer?
+            var l = new ol.layer.Heatmap({
                 source: this.vectorSource,
                 blur: parseInt(this.heatmapBlur),
                 radius: 2,
             });
+            l.set('name', 'heatmapLayer')
+            return l;
         },
     },
     methods: {
-        initializeMap: function (target) {
-            new ol.Map({
-                target: target,
+        getMap: function() {
+            return new ol.Map({
                 layers: [
-                    this.baseLayer,
+                    new ol.layer.Tile({
+                        source: new ol.source.OSM({url: "http://a.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"})
+                    }),
                     this.clusterLayer,
                     this.heatmapLayer
                 ],
@@ -90,7 +102,8 @@ Vue.component('dashboard-map', {
         }
     },
     mounted() {
-        this.initializeMap(this.$refs['map-root']);
+        this.map = this.getMap();
+        this.map.setTarget(this.$refs['map-root']); // Assign the map to div and display
     },
     template: '<div id="map" class="map" ref="map-root" style="height: 640px; width: 100%;"></div>'
 })
