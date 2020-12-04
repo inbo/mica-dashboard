@@ -18,7 +18,7 @@
             <div id="app">
                 <dashboard-map v-if="occurrences" :occurrences="occurrences"
                                initial-lat="50.63" initial-lon="4.67" initial-zoom="8"
-                               :heatmap-blur="heatmapBlur"
+                               :heatmap-blur="heatmapBlur" :heatmap-radius="heatmapRadius"
                 ></dashboard-map>
             </div>
         </div>
@@ -35,7 +35,8 @@
                         occurrencesCsvUrl: "{% url 'dashboard-occurrences_csv' %}",
                         occurrences: null, // Array of objects: [{id: 1234, lon: 5.32, lat:50.12}, ...],
 
-                        heatmapBlur: 20
+                        heatmapBlur: 20,
+                        heatmapRadius: 2
                     }
                 },
                 mounted() {

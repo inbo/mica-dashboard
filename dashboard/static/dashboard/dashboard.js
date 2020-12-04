@@ -1,5 +1,20 @@
 Vue.component('dashboard-map', {
-    props: ['occurrences', 'initialLat', 'initialLon', 'initialZoom', 'heatmapBlur'],
+    props: {
+        'occurrences': Array,
+
+        'initialLat': Number,
+        'initialLon': Number,
+        'initialZoom': Number,
+
+        'heatmapBlur': {
+            type: Number,
+            default: 20
+        },
+        'heatmapRadius': {
+            type: Number,
+            default: 2
+        },
+    },
     data: function () {
         return {
             clusterStyleCache: {},
@@ -9,8 +24,13 @@ Vue.component('dashboard-map', {
     },
     watch: {
         heatmapBlur: {
-            handler: function (val, oldVal) {
-                this.heatmapLayerFromMap.setBlur(parseInt(val));
+            handler: function (val) {
+                this.heatmapLayer.setBlur(val);
+            },
+        },
+        heatmapRadius: {
+            handler: function (val) {
+                this.heatmapLayer.setRadius(val);
             },
         },
         occurrences: {
@@ -30,17 +50,28 @@ Vue.component('dashboard-map', {
         },
     },
     computed: {
-        clusterSource: function () {
-            return new ol.source.Cluster({
+        clusterLayer: function () {
+            return this.map.getLayers().getArray().find(function (l) {
+                return (l.get('name') == 'clusterLayer')
+            });
+        },
+        heatmapLayer: function () {
+            return this.map.getLayers().getArray().find(function (l) {
+                return (l.get('name') == 'heatmapLayer')
+            });
+        },
+    },
+    methods: {
+        createClusterLayer: function () {
+            var vm = this;
+
+            var clusterSource = new ol.source.Cluster({
                 distance: 40,
                 source: this.vectorSource,
             });
-        },
-        clusterLayer: function () {
-            var vm = this;
 
-            return new ol.layer.Vector({
-                source: this.clusterSource,
+            var l = new ol.layer.Vector({
+                source: clusterSource,
                 style: function (feature) {
                     var size = feature.get('features').length;
                     var style = vm.clusterStyleCache[size];
@@ -67,32 +98,28 @@ Vue.component('dashboard-map', {
                     return style;
                 },
             });
+            l.set('name', 'clusterLayer')
+            return l;
         },
-        heatmapLayerFromMap: function() {
-            console.log("getLAyers out", this.map.getLayers());
-            return this.map.getLayers().getArray().find(function(l) {
-                return (l.get('name') == 'heatmapLayer')
-            });
-        },
-        heatmapLayer: function () { // For creation... replace by a simple method (then we can rename heatmapLayerFromMap -> heatmapLayer?
+        createHeatmapLayer: function () {
             var l = new ol.layer.Heatmap({
                 source: this.vectorSource,
-                blur: parseInt(this.heatmapBlur),
-                radius: 2,
+                blur: this.heatmapBlur,
+                radius: this.heatmapRadius,
             });
             l.set('name', 'heatmapLayer')
             return l;
         },
-    },
-    methods: {
-        getMap: function() {
+        createMap: function () {
+            var baseLayer = new ol.layer.Tile({
+                source: new ol.source.OSM({url: "http://a.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"})
+            })
+
             return new ol.Map({
                 layers: [
-                    new ol.layer.Tile({
-                        source: new ol.source.OSM({url: "http://a.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"})
-                    }),
-                    this.clusterLayer,
-                    this.heatmapLayer
+                    baseLayer,
+                    this.createClusterLayer(),
+                    this.createHeatmapLayer()
                 ],
                 view: new ol.View({
                     center: ol.proj.fromLonLat([this.initialLon, this.initialLat]),
@@ -102,7 +129,7 @@ Vue.component('dashboard-map', {
         }
     },
     mounted() {
-        this.map = this.getMap();
+        this.map = this.createMap();
         this.map.setTarget(this.$refs['map-root']); // Assign the map to div and display
     },
     template: '<div id="map" class="map" ref="map-root" style="height: 640px; width: 100%;"></div>'
