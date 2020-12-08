@@ -4,6 +4,7 @@ from .models import Occurrence, Species, Dataset
 
 class OccurrenceAdmin(admin.OSMGeoAdmin):
     list_display = ('gbif_id', 'species', 'source_dataset')
+    list_filter = ('source_dataset__name',)
 
 
 admin.site.register(Occurrence, OccurrenceAdmin)

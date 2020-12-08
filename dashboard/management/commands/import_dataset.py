@@ -70,11 +70,17 @@ class Command(BaseCommand):
                     day = 1
                 date = datetime.date(year, month, day)
 
+                # individualCount is not always present - default to 1
+                try:
+                    ic = int(row.data[qn('individualCount')])
+                except ValueError:
+                    ic = 1
+
                 Occurrence.objects.create(
                     gbif_id=int(row.data['http://rs.gbif.org/terms/1.0/gbifID']),
                     species=species,
                     source_dataset=dataset,
-                    individual_count=row.data[qn('individualCount')],
+                    individual_count=ic,
                     date=date,
                     location=point,
                     coordinates_uncertainty=float(row.data[qn('coordinateUncertaintyInMeters')]),
