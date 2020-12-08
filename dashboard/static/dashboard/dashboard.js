@@ -15,7 +15,7 @@ Vue.component('dashboard-map', {
             default: 2
         },
 
-        'visibleLayer': String // "cluster" | "heatmap"
+        'visibleLayer': String // "pointsLayer" | "clusterLayer" | "heatmapLayer"
     },
     data: function () {
         return {
@@ -26,7 +26,7 @@ Vue.component('dashboard-map', {
     },
     watch: {
         visibleLayer: {
-            handler: function(val) {
+            handler: function (val) {
                 this.setLayerVisibility(val);
             },
         },
@@ -57,29 +57,39 @@ Vue.component('dashboard-map', {
         },
     },
     computed: {
+        allLayers: function() {
+            return this.map.getLayers().getArray();
+        },
+        dataLayers: function() {
+            return this.allLayers.filter(function(l) {
+                return l.get('dataLayer') == true;
+            })
+        },
+        pointsLayer: function () {
+            return this.dataLayers.find(function (l) {
+                return (l.get('name') == 'pointsLayer')
+            });
+        },
         clusterLayer: function () {
-            return this.map.getLayers().getArray().find(function (l) {
+            return this.dataLayers.find(function (l) {
                 return (l.get('name') == 'clusterLayer')
             });
         },
         heatmapLayer: function () {
-            return this.map.getLayers().getArray().find(function (l) {
+            return this.dataLayers.find(function (l) {
                 return (l.get('name') == 'heatmapLayer')
             });
         },
     },
     methods: {
-        setLayerVisibility: function (val) {
-            switch(val) {
-                    case "cluster":
-                        this.clusterLayer.setVisible(true);
-                        this.heatmapLayer.setVisible(false);
-                        break;
-                    case "heatmap":
-                        this.clusterLayer.setVisible(false);
-                        this.heatmapLayer.setVisible(true);
-                        break;
+        setLayerVisibility: function (layerName) {
+            this.dataLayers.forEach(function(l) {
+                if(l.get('name') === layerName) {
+                    l.setVisible(true);
+                } else {
+                    l.setVisible(false);
                 }
+            })
         },
         createClusterLayer: function () {
             var vm = this;
@@ -119,6 +129,7 @@ Vue.component('dashboard-map', {
                 },
             });
             l.set('name', 'clusterLayer')
+            l.set('dataLayer', true);
             return l;
         },
         createHeatmapLayer: function () {
@@ -129,6 +140,23 @@ Vue.component('dashboard-map', {
                 radius: this.heatmapRadius,
             });
             l.set('name', 'heatmapLayer')
+            l.set('dataLayer', true);
+            return l;
+        },
+        createPointsLayer: function () {
+            var l = new ol.layer.WebGLPoints({
+                source:  this.vectorSource,
+                visible: false,
+                style: {
+                    symbol: {
+                        symbolType: 'square',
+                        size: 10,
+                        color: 'rgba(255,0,0,0.1)'
+                    }
+                }
+            })
+            l.set('name', 'pointsLayer')
+            l.set('dataLayer', true);
             return l;
         },
         createMap: function () {
@@ -140,7 +168,8 @@ Vue.component('dashboard-map', {
                 layers: [
                     baseLayer,
                     this.createClusterLayer(),
-                    this.createHeatmapLayer()
+                    this.createHeatmapLayer(),
+                    this.createPointsLayer()
                 ],
                 view: new ol.View({
                     center: ol.proj.fromLonLat([this.initialLon, this.initialLat]),
@@ -153,6 +182,7 @@ Vue.component('dashboard-map', {
         this.map = this.createMap();
         this.map.setTarget(this.$refs['map-root']); // Assign the map to div and display
         this.setLayerVisibility(this.visibleLayer);
+        this.$emit('finished-mounting');
     },
     template: '<div id="map" class="map" ref="map-root" style="height: 640px; width: 100%;"></div>'
 })

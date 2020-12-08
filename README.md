@@ -13,12 +13,6 @@ Run management command:
     $ docker-compose run web python manage.py <DJANGO_COMMAND>
 
 # TODO:
-- Map perf issues:
-    - Backend: smaller GeoJSON file. CSV? Stream it?
-    - Backend: does caching works well (parameters?) invalidate on data load? Use memcache?
-    - Frontend: clustering?
-    - Frontend: VectorTile is optimized for rendering, use instead of vectorSource
-    - see webGL example, very similar
 
 - Adapt docker-compose configuration for production:
     - add nginx
