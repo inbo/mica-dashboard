@@ -14,6 +14,8 @@ Run management command:
 
 # TODO:
 
+- Use "API" urls for endpoints
+
 - Adapt docker-compose configuration for production:
     - add nginx
     - replace dev server by gunicorn

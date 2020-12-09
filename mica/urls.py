@@ -21,5 +21,6 @@ from dashboard import views
 urlpatterns = [
     path('', views.index, name="dashboard-index"),
     path('occurrences_csv/', views.occurrences_csv, name="dashboard-occurrences_csv"),
+    path('api/available_datasets', views.available_datasets, name="dashboard-api-available-datasets"),
     path('admin/', admin.site.urls),
 ]

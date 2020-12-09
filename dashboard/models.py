@@ -16,6 +16,9 @@ class Dataset(models.Model):
     def __str__(self):
         return self.name
 
+    class Meta:
+        ordering = ["name"]
+
 
 class Occurrence(models.Model):
     gbif_id = models.CharField(max_length=100, unique=True)

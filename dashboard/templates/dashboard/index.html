@@ -28,6 +28,16 @@
             <div id="app">
                 <form>
                     <div class="form-group">
+                        <label for="selectedDataset">Source dataset</label>
+                        <select class="form-control" id="selectedDataset" v-model="selectedDatasetId">
+                            <option value="null">-- ALL --</option>
+                            <option v-for="dataset in availableDatasets" :key="dataset.id" :value="dataset.id">[[
+                                dataset.name ]]
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
                         <label for="selectedLayer">Layer type</label>
                         <select class="form-control" id="selectedLayer" v-model="visibleLayer">
                             <option>pointsLayer</option>
@@ -49,18 +59,21 @@
                 </form>
 
                 <transition name="fade">
-                    <div v-if="stillLoading" class="alert alert-primary" role="alert">
+                    <div v-if="loading" class="alert alert-primary" role="alert">
                         <h6>Please wait...</h6>
-                        [[ loadingMessage ]]
+                        Loading...
                     </div>
                 </transition>
 
-                <dashboard-map v-if="occurrences" :occurrences="occurrences"
-                               :initial-lat="50.63" :initial-lon="4.67" :initial-zoom="8"
-                               :heatmap-blur="heatmapBlur" :heatmap-radius="heatmapRadius"
-                               :visible-layer="visibleLayer"
-                               @finished-mounting="finishedMountingMap()"
-                ></dashboard-map>
+                <div v-if="!loading">
+                    <p>[[ occurrencesCounter ]] occurrences.</p>
+
+                    <dashboard-map v-if="occurrences" :occurrences="occurrences"
+                                   :initial-lat="50.63" :initial-lon="4.67" :initial-zoom="8"
+                                   :heatmap-blur="heatmapBlur" :heatmap-radius="heatmapRadius"
+                                   :visible-layer="visibleLayer"
+                    ></dashboard-map>
+                </div>
             </div>
         </div>
     </div>
@@ -69,51 +82,95 @@
         window.onload = function () {
             Vue.config.devtools = true;
             var App = new Vue({
-                el: '#app',
-                delimiters: ['[[', ']]'],
-                data() {
-                    return {
-                        occurrencesCsvUrl: "{% url 'dashboard-occurrences_csv' %}",
-                        occurrences: null, // Array of objects: [{id: 1234, lon: 5.32, lat:50.12}, ...],
+                    el: '#app',
+                    delimiters: ['[[', ']]'],
+                    data() {
+                        return {
+                            occurrencesCsvUrl: "{% url 'dashboard-occurrences_csv' %}",
+                            occurrences: null, // Array of objects: [{id: 1234, lon: 5.32, lat:50.12}, ...],
 
-                        heatmapBlur: 15,
-                        heatmapRadius: 2,
-                        visibleLayer: 'heatmapLayer',
+                            availableDatasetsUrl: "{% url 'dashboard-api-available-datasets' %}",
+                            availableDatasets: [],
+                            selectedDatasetId: null,
 
-                        loadingMessage: '',
-                        stillLoading: true
-                    }
-                },
-                mounted() {
-                    this.getAndReplaceOccurrenceData();
-                },
-                methods: {
-                    finishedMountingMap: function () {
-                        this.loadingMessage = "Map component mounted"
-                        this.stillLoading = false;
+                            heatmapBlur: 15,
+                            heatmapRadius: 2,
+                            visibleLayer: 'clusterLayer',
+
+                            loadingMessage: '',
+                            loading: true
+                        }
                     },
-                    getAndReplaceOccurrenceData: function () {
-                        var vm = this;
-                        this.loadingMessage = "Loading data..."
+                    computed: {
+                        occurrencesCounter: function () {
+                            return (this.occurrences ? this.occurrences.length : 0);
+                        },
 
-                        $.ajax({
-                            url: this.occurrencesCsvUrl,
-                            dataType: "text"
-                        }).done(function (data) {
-                            vm.loadingMessage = "Data loaded, processing..."
-                            var dataLines = data.split('\n');
-                            var newOccurrences = []
-                            dataLines.forEach(function (row) {
-                                var splitted = row.split(',')
-                                newOccurrences.push({id: splitted[0], lon: splitted[1], lat: splitted[2]});
+                        queryFiltersData: function () {
+                            var obj = {
+                                datasetId: this.selectedDatasetId
+                            }
+
+                            return this.clean(obj); // It helps with server side caching if we don't request unnecessary GET params
+                        }
+                    },
+                    mounted() {
+                        this.populateDatasetSelect();
+                    },
+
+                    watch: {
+                        'selectedDatasetId': {
+                            handler: function (newVal) {
+                                this.getAndReplaceOccurrenceData();
+                            },
+                            immediate: true
+                        }
+                    },
+                    methods: {
+                        populateDatasetSelect: function () {
+                            var vm = this;
+                            $.ajax({
+                                url: this.availableDatasetsUrl,
+                            }).done(function (data) {
+                                vm.availableDatasets = data;
+                            })
+                        },
+                        finishedMountingMap: function () {
+                            this.loading = false;
+                        },
+                        clean: function (obj) {
+                            // Remove undefined or null properties from an object
+                            clonedObj = Object.assign({}, obj);
+                            for (var propName in clonedObj) {
+                                if (clonedObj[propName] === null || clonedObj[propName] === undefined) {
+                                    delete clonedObj[propName];
+                                }
+                            }
+                            return clonedObj;
+                        },
+                        getAndReplaceOccurrenceData: function () {
+                            var vm = this;
+
+                            this.loading = true;
+                            $.ajax({
+                                url: this.occurrencesCsvUrl,
+                                data: vm.queryFiltersData,
+                                dataType: "text"
+                            }).done(function (data) {
+                                var dataLines = data.split('\n');
+                                var newOccurrences = []
+                                dataLines.forEach(function (row) {
+                                    var splitted = row.split(',')
+                                    newOccurrences.push({id: splitted[0], lon: splitted[1], lat: splitted[2]});
+                                });
+                                vm.occurrences = newOccurrences;
+                                vm.loading = false;
                             });
-                            vm.loadingMessage = "Map rendering..."
-                            vm.occurrences = newOccurrences;
-                        });
+                        }
                     }
-                }
 
-            });
+                })
+            ;
         };
     </script>
 {% endblock %}
