@@ -14,6 +14,7 @@ Run management command:
 
 # TODO:
 
+- Too much code duplication in filters (species + dataset), refactor
 - Source dataset select: show number of available occurrences
 - Optimize postgres for reads (https://dba.stackexchange.com/questions/42290/configuring-postgresql-for-read-performance)?
 
