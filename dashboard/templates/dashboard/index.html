@@ -38,6 +38,16 @@
                     </div>
 
                     <div class="form-group">
+                        <label for="selectedSpecies">Species</label>
+                        <select class="form-control" id="selectedDataset" v-model="selectedSpeciesId">
+                            <option value="null">-- ALL --</option>
+                            <option v-for="species in availableSpecies" :key="species.id" :value="species.id">[[
+                                species.name ]]
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
                         <label for="selectedLayer">Layer type</label>
                         <select class="form-control" id="selectedLayer" v-model="visibleLayer">
                             <option>pointsLayer</option>
@@ -86,16 +96,20 @@
                     delimiters: ['[[', ']]'],
                     data() {
                         return {
-                            occurrencesCsvUrl: "{% url 'dashboard-occurrences_csv' %}",
+                            occurrencesCsvUrl: "{% url 'dashboard-api-occurrences_csv' %}",
                             occurrences: null, // Array of objects: [{id: 1234, lon: 5.32, lat:50.12}, ...],
 
                             availableDatasetsUrl: "{% url 'dashboard-api-available-datasets' %}",
                             availableDatasets: [],
                             selectedDatasetId: null,
 
+                            availableSpeciesUrl: "{% url 'dashboard-api-available-species' %}",
+                            availableSpecies: [],
+                            selectedSpeciesId: null,
+
                             heatmapBlur: 15,
                             heatmapRadius: 2,
-                            visibleLayer: 'clusterLayer',
+                            visibleLayer: 'pointsLayer',
 
                             loadingMessage: '',
                             loading: true
@@ -108,7 +122,8 @@
 
                         queryFiltersData: function () {
                             var obj = {
-                                datasetId: this.selectedDatasetId
+                                datasetId: this.selectedDatasetId,
+                                speciesId: this.selectedSpeciesId
                             }
 
                             return this.clean(obj); // It helps with server side caching if we don't request unnecessary GET params
@@ -116,6 +131,7 @@
                     },
                     mounted() {
                         this.populateDatasetSelect();
+                        this.populateSpeciesSelect();
                     },
 
                     watch: {
@@ -124,9 +140,23 @@
                                 this.getAndReplaceOccurrenceData();
                             },
                             immediate: true
+                        },
+                        'selectedSpeciesId': {
+                            handler: function (newVal) {
+                                this.getAndReplaceOccurrenceData();
+                            },
+                            immediate: true
                         }
                     },
                     methods: {
+                        populateSpeciesSelect: function () {
+                            var vm = this;
+                            $.ajax({
+                                url: this.availableSpeciesUrl,
+                            }).done(function (data) {
+                                vm.availableSpecies = data;
+                            })
+                        },
                         populateDatasetSelect: function () {
                             var vm = this;
                             $.ajax({

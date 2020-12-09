@@ -3,7 +3,7 @@ from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.views.decorators.cache import cache_page
 
-from .models import Occurrence, Dataset
+from .models import Occurrence, Dataset, Species
 
 
 def index(request):
@@ -12,6 +12,11 @@ def index(request):
 
 def available_datasets(request):
     data = list(Dataset.objects.all().values())
+    return JsonResponse(data, safe=False)
+
+
+def available_species(request):
+    data = list(Species.objects.all().values())
     return JsonResponse(data, safe=False)
 
 
@@ -31,11 +36,13 @@ def occurrences_csv(request):
     response['Content-Disposition'] = 'inline'
 
     dataset_id = _extract_int_request(request, 'datasetId')
+    species_id = _extract_int_request(request, 'speciesId')
 
     objects = Occurrence.objects.all()
     if dataset_id:
         objects = objects.filter(source_dataset__pk=dataset_id)
-
+    if species_id:
+        objects = objects.filter(species__pk=species_id)
 
     writer = csv.writer(response)
     for o in objects:
