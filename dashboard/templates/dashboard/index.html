@@ -27,34 +27,41 @@
         <div class="col">
             <div id="app">
                 <form>
-                    <div class="form-group">
-                        <label for="selectedDataset">Source dataset</label>
-                        <select class="form-control" id="selectedDataset" v-model="selectedDatasetId">
-                            <option value="null">-- ALL --</option>
-                            <option v-for="dataset in availableDatasets" :key="dataset.id" :value="dataset.id">[[
-                                dataset.name ]]
-                            </option>
-                        </select>
+                    <h6>Filters</h6>
+                    <div class="form-row">
+                        <div class="col">
+                            <label class="col-form-label col-form-label-sm" for="selectedDataset">Source dataset</label>
+                            <select class="form-control form-control-sm" id="selectedDataset"
+                                    v-model="selectedDatasetId">
+                                <option value="null">-- ALL --</option>
+                                <option v-for="dataset in availableDatasets" :key="dataset.id" :value="dataset.id">[[
+                                    dataset.name ]]
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="col">
+                            <label class="col-form-label col-form-label-sm" for="selectedSpecies">Species</label>
+                            <select class="form-control form-control-sm" id="selectedDataset"
+                                    v-model="selectedSpeciesId">
+                                <option value="null">-- ALL --</option>
+                                <option v-for="species in availableSpecies" :key="species.id" :value="species.id">[[
+                                    species.name ]]
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="col">
+                                <label class="col-form-label col-form-label-sm" for="onlyRecentOccurrences">Show only recent (2019+) occurrences</label>
+                                <input type="checkbox"  id="onlyRecentOccurrences"
+                                       v-model="onlyRecentOccurrences">
+                        </div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="selectedSpecies">Species</label>
-                        <select class="form-control" id="selectedDataset" v-model="selectedSpeciesId">
-                            <option value="null">-- ALL --</option>
-                            <option v-for="species in availableSpecies" :key="species.id" :value="species.id">[[
-                                species.name ]]
-                            </option>
-                        </select>
-                    </div>
-
-                    <div class="form-check">
-                        <input type="checkbox" class="form-check-input" id="onlyRecentOccurrences" v-model="onlyRecentOccurrences">
-                        <label class="form-check-label" for="onlyRecentOccurrences">Show only recent (2019+) occurrences</label>
-                    </div>
-
+                    <h6>Styling</h6>
                     <div class="form-group">
                         <label for="selectedLayer">Layer type</label>
-                        <select class="form-control" id="selectedLayer" v-model="visibleLayer">
+                        <select class="form-control form-control-sm" id="selectedLayer" v-model="visibleLayer">
                             <option>pointsLayer</option>
                             <option>clusterLayer</option>
                             <option>heatmapLayer</option>
