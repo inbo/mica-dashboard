@@ -1,3 +1,21 @@
+// Helpers
+
+// See: https://stackoverflow.com/questions/1129216/sort-array-of-objects-by-string-property-value
+function dynamicSort(property) {
+    var sortOrder = 1;
+    if(property[0] === "-") {
+        sortOrder = -1;
+        property = property.substr(1);
+    }
+    return function (a,b) {
+        /* next line works with strings and numbers,
+         * and you may want to customize it to your needs
+         */
+        var result = (a[property] < b[property]) ? -1 : (a[property] > b[property]) ? 1 : 0;
+        return result * sortOrder;
+    }
+}
+
 // A single page in the occurrence table
 Vue.component('occurrence-table-page', {
     props: {
@@ -30,10 +48,25 @@ Vue.component('dashboard-table', {
     data: function() {
         return {
             currentPage: 1,
-            pageSize: 20
+            pageSize: 20,
+
+            sortBy: 'id', // Entry for 'id' in the 'cols' objects
+
+            cols: [
+                // id: used internally by Vue code, label: displayed in header, dataAttribute: attribute of the occurrence object
+                {'id': 'id', 'label': '#', 'dataAttribute': 'id'},
+                {'id': 'lat', 'label': 'Lat', 'dataAttribute': 'lat'},
+                {'id': 'lon', 'label': 'Lon', 'dataAttribute': 'lon'},
+            ]
         }
     },
     computed: {
+        sortByDataAttribute: function() {
+            return this.cols.find(col => col.id === this.sortBy).dataAttribute;
+        },
+        sortedOccurrences: function() {
+            return this.occurrences.sort(dynamicSort(this.sortByDataAttribute));
+        },
         hasPreviousPage: function() {
             return (this.currentPage > 1);
         },
@@ -50,16 +83,16 @@ Vue.component('dashboard-table', {
             let startIndex = (this.currentPage - 1) * this.pageSize;
             let endIndex = Math.min(startIndex + this.pageSize - 1, this.numberOfOccurrences - 1);
 
-            return this.occurrences.slice(startIndex, endIndex + 1);
+            return this.sortedOccurrences.slice(startIndex, endIndex + 1);
         }
     },
     template: `<div id="table-outer">
                     <table class="table table-striped table-sm">
                         <thead class="thead-dark">
                             <tr>
-                                <th scope="col">#</th>
-                                <th scope="col">Lat</th>
-                                <th scope="col">Lon</th>
+                                <th :class="{ 'text-primary': (sortBy == col.id) } " v-for="col in cols" scope="col">
+                                    <span @click="sortBy = col.id">{{ col.label }}</span>
+                                </th>
                             </tr>
                         </thead>                 
                         <occurrence-table-page :occurrences="occurrencesCurrentPage"></occurrence-table-page>
