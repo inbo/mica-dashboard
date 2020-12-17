@@ -3,11 +3,11 @@
 // See: https://stackoverflow.com/questions/1129216/sort-array-of-objects-by-string-property-value
 function dynamicSort(property) {
     var sortOrder = 1;
-    if(property[0] === "-") {
+    if (property[0] === "-") {
         sortOrder = -1;
         property = property.substr(1);
     }
-    return function (a,b) {
+    return function (a, b) {
         /* next line works with strings and numbers,
          * and you may want to customize it to your needs
          */
@@ -21,7 +21,7 @@ Vue.component('occurrence-table-page', {
     props: {
         'occurrences': { // Only the subset for the page
             type: Array,
-            default: function() {
+            default: function () {
                 return []
             }
         }
@@ -40,12 +40,12 @@ Vue.component('dashboard-table', {
     props: {
         'occurrences': { // All occurrences, coming from the main component
             type: Array,
-            default: function() {
+            default: function () {
                 return []
             }
         }
     },
-    data: function() {
+    data: function () {
         return {
             currentPage: 1,
             pageSize: 20,
@@ -61,22 +61,22 @@ Vue.component('dashboard-table', {
         }
     },
     computed: {
-        sortByDataAttribute: function() {
+        sortByDataAttribute: function () {
             return this.cols.find(col => col.id === this.sortBy).dataAttribute;
         },
-        sortedOccurrences: function() {
+        sortedOccurrences: function () {
             return this.occurrences.sort(dynamicSort(this.sortByDataAttribute));
         },
-        hasPreviousPage: function() {
+        hasPreviousPage: function () {
             return (this.currentPage > 1);
         },
-        hasNextPage: function() {
+        hasNextPage: function () {
             return (this.currentPage < this.numberOfPages);
         },
-        numberOfOccurrences: function() {
+        numberOfOccurrences: function () {
             return this.occurrences.length;
         },
-        numberOfPages: function() {
+        numberOfPages: function () {
             return Math.ceil(this.numberOfOccurrences / this.pageSize);
         },
         occurrencesCurrentPage: function () {
@@ -165,11 +165,11 @@ Vue.component('dashboard-map', {
         },
     },
     computed: {
-        allLayers: function() {
+        allLayers: function () {
             return this.map.getLayers().getArray();
         },
-        dataLayers: function() {
-            return this.allLayers.filter(function(l) {
+        dataLayers: function () {
+            return this.allLayers.filter(function (l) {
                 return l.get('dataLayer') == true;
             })
         },
@@ -191,8 +191,8 @@ Vue.component('dashboard-map', {
     },
     methods: {
         setLayerVisibility: function (layerName) {
-            this.dataLayers.forEach(function(l) {
-                if(l.get('name') === layerName) {
+            this.dataLayers.forEach(function (l) {
+                if (l.get('name') === layerName) {
                     l.setVisible(true);
                 } else {
                     l.setVisible(false);
@@ -253,7 +253,7 @@ Vue.component('dashboard-map', {
         },
         createPointsLayer: function () {
             var l = new ol.layer.WebGLPoints({
-                source:  this.vectorSource,
+                source: this.vectorSource,
                 visible: false,
                 style: {
                     symbol: {

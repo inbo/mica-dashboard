@@ -1,4 +1,6 @@
 import csv
+from datetime import datetime
+
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.views.decorators.cache import cache_page
@@ -54,7 +56,7 @@ def occurrences_csv(request):
     if species_id:
         objects = objects.filter(species__pk=species_id)
     if only_recent:
-        objects = objects.filter(date__range=['2019-01-01', '2020-12-31'])
+        objects = objects.filter(date__range=['2019-01-01', datetime.today().strftime('%Y-%m-%d')])
 
     writer = csv.writer(response)
     for o in objects:
