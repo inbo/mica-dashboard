@@ -1,3 +1,78 @@
+// A single page in the occurrence table
+Vue.component('occurrence-table-page', {
+    props: {
+        'occurrences': { // Only the subset for the page
+            type: Array,
+            default: function() {
+                return []
+            }
+        }
+    },
+    template: `<tbody>
+                 <tr v-for="occ in occurrences">
+                    <th scope="row">{{ occ.id }}</th>
+                    <td>{{ occ.lat }}</td>
+                    <td>{{ occ.lon }}</td>
+                 </tr>
+               </tbody>`
+});
+
+// The main table component (get all occurrence, manage table options, header and pagination)
+Vue.component('dashboard-table', {
+    props: {
+        'occurrences': { // All occurrences, coming from the main component
+            type: Array,
+            default: function() {
+                return []
+            }
+        }
+    },
+    data: function() {
+        return {
+            currentPage: 1,
+            pageSize: 20
+        }
+    },
+    computed: {
+        hasPreviousPage: function() {
+            return (this.currentPage > 1);
+        },
+        hasNextPage: function() {
+            return (this.currentPage < this.numberOfPages);
+        },
+        numberOfOccurrences: function() {
+            return this.occurrences.length;
+        },
+        numberOfPages: function() {
+            return Math.ceil(this.numberOfOccurrences / this.pageSize);
+        },
+        occurrencesCurrentPage: function () {
+            let startIndex = (this.currentPage - 1) * this.pageSize;
+            let endIndex = Math.min(startIndex + this.pageSize - 1, this.numberOfOccurrences - 1);
+
+            return this.occurrences.slice(startIndex, endIndex + 1);
+        }
+    },
+    template: `<div id="table-outer">
+                    <table class="table table-striped table-sm">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">Lat</th>
+                                <th scope="col">Lon</th>
+                            </tr>
+                        </thead>                 
+                        <occurrence-table-page :occurrences="occurrencesCurrentPage"></occurrence-table-page>
+                    </table>
+                    <p> 
+                        <button type="button" :disabled="!hasPreviousPage" class="btn btn-outline-primary btn-sm" @click="currentPage -= 1">Previous</button>
+                        Page {{ currentPage }} / {{ numberOfPages }}
+                        <button type="button" :disabled="!hasNextPage" class="btn btn-outline-primary btn-sm" @click="currentPage += 1">Next</button>
+                    </p>
+               </div>`
+});
+
+// The main map
 Vue.component('dashboard-map', {
     props: {
         'occurrences': Array,
