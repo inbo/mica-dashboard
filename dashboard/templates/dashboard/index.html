@@ -19,46 +19,41 @@
 {% endblock %}
 
 {% block content %}
-    <div class="row">
-        <div class="col"><h1>Rats data</h1></div>
-    </div>
 
-    <div class="row">
-        <div class="col">
-            <div id="app">
+        <div id="app">
+            <div class="row">
+                <div class="col-3 bg-dark text-white">
                 <form>
-                    <h6>Filters</h6>
-                    <div class="form-row">
-                        <div class="col">
-                            <label class="col-form-label col-form-label-sm" for="selectedDataset">Source dataset</label>
-                            <select class="form-control form-control-sm" id="selectedDataset"
+                    <h3>Data filtering</h3>
+                    <div class="form-group">
+                        <label class="col-form-label col-form-label-sm" for="selectedDataset">Source dataset</label>
+                        <select class="form-control form-control-sm" id="selectedDataset"
                                     v-model="selectedDatasetId">
-                                <option value="null">-- ALL --</option>
-                                <option v-for="dataset in availableDatasets" :key="dataset.id" :value="dataset.id">[[
+                            <option value="null">-- ALL --</option>
+                            <option v-for="dataset in availableDatasets" :key="dataset.id" :value="dataset.id">[[
                                     dataset.name ]]
-                                </option>
-                            </select>
-                        </div>
-
-                        <div class="col">
-                            <label class="col-form-label col-form-label-sm" for="selectedSpecies">Species</label>
-                            <select class="form-control form-control-sm" id="selectedDataset"
-                                    v-model="selectedSpeciesId">
-                                <option value="null">-- ALL --</option>
-                                <option v-for="species in availableSpecies" :key="species.id" :value="species.id">[[
-                                    species.name ]]
-                                </option>
-                            </select>
-                        </div>
-
-                        <div class="col">
-                                <label class="col-form-label col-form-label-sm" for="onlyRecentOccurrences">Show only recent (2019+) occurrences</label>
-                                <input type="checkbox"  id="onlyRecentOccurrences"
-                                       v-model="onlyRecentOccurrences">
-                        </div>
+                            </option>
+                        </select>
                     </div>
 
-                    <h6>Styling</h6>
+                    <div class="form-group">
+                        <label class="col-form-label col-form-label-sm" for="selectedSpecies">Species</label>
+                        <select class="form-control form-control-sm" id="selectedDataset"
+                                v-model="selectedSpeciesId">
+                            <option value="null">-- ALL --</option>
+                            <option v-for="species in availableSpecies" :key="species.id" :value="species.id">[[
+                                    species.name ]]
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="col-form-label col-form-label-sm" for="onlyRecentOccurrences">Show only recent (2019+) occurrences</label>
+                        <input type="checkbox"  id="onlyRecentOccurrences"
+                                       v-model="onlyRecentOccurrences">
+                    </div>
+
+                    <h3>Map style</h3>
                     <div class="form-group">
                         <label for="selectedLayer">Layer type</label>
                         <select class="form-control form-control-sm" id="selectedLayer" v-model="visibleLayer">
@@ -79,28 +74,31 @@
                                :disabled="visibleLayer !== 'heatmapLayer'">
                     </div>
                 </form>
+            </div>
 
+                <div class="col-9">
                 <transition name="fade">
                     <div v-if="loading" class="alert alert-primary" role="alert">
                         <h6>Please wait...</h6>
-                        Loading...
+                        Data is loading...
                     </div>
                 </transition>
-
                 <div v-if="!loading">
-                    <p>[[ occurrencesCounter ]] occurrences.</p>
+                    <p class="alert alert-primary" role="alert">[[ occurrencesCounter ]] occurrence(s) found.</p>
 
+                    <h2>Map view</h2>
                     <dashboard-map v-if="occurrences" :occurrences="occurrences"
                                    :initial-lat="50.63" :initial-lon="4.67" :initial-zoom="8"
                                    :heatmap-blur="heatmapBlur" :heatmap-radius="heatmapRadius"
                                    :visible-layer="visibleLayer"
                     ></dashboard-map>
 
+                    <h2>Table view</h2>
                     <dashboard-table :occurrences="occurrences"></dashboard-table>
+                </div>
                 </div>
             </div>
         </div>
-    </div>
 
     <script type="text/javascript">
         window.onload = function () {
