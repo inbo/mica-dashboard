@@ -18,16 +18,22 @@
     </style>
 {% endblock %}
 
-{% block content %}
+{% block content-fixed %}
+    <h1 class="display-4">MICA Dashboard</h1>
+    <p class="font-weight-light">
+        The MICA dashboard shows data originating ... Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus nunc diam, iaculis et lectus vel, iaculis lobortis lectus. Curabitur magna felis, consectetur ac ante in, hendrerit aliquam erat. Nunc condimentum tellus ac diam rhoncus, sed facilisis libero placerat. Phasellus tempus felis vel mi blandit tristique. Donec porta, sapien vel scelerisque sollicitudin, arcu purus posuere risus, ut sagittis arcu est in mi. Cras finibus quam nibh, nec lobortis magna pretium ut. Duis lobortis ac nibh eu aliquet. Morbi vehicula faucibus augue sed sollicitudin. Pellentesque tincidunt sem eu vehicula eleifend. Nunc nec quam id dolor dictum congue et sed elit.
+    </p>
+{% endblock %}
 
+{% block content-fluid %}
         <div id="app">
             <div class="row">
-                <div class="col-3 bg-dark text-white">
+                <div class="col-3 bg-dark text-white shadow">
                 <form>
-                    <h3>Data filtering</h3>
-                    <div class="form-group">
-                        <label class="col-form-label col-form-label-sm" for="selectedDataset">Source dataset</label>
-                        <select class="form-control form-control-sm" id="selectedDataset"
+                    <h4 class="text-center">Data filtering</h4>
+                    <div class="form-group row">
+                        <label class="col-sm-6 col-form-label col-form-label-sm" for="selectedDataset">Source dataset</label>
+                        <select class="col-sm-6 form-control form-control-sm" id="selectedDataset"
                                     v-model="selectedDatasetId">
                             <option value="null">-- ALL --</option>
                             <option v-for="dataset in availableDatasets" :key="dataset.id" :value="dataset.id">[[
@@ -36,9 +42,9 @@
                         </select>
                     </div>
 
-                    <div class="form-group">
-                        <label class="col-form-label col-form-label-sm" for="selectedSpecies">Species</label>
-                        <select class="form-control form-control-sm" id="selectedDataset"
+                    <div class="form-group row">
+                        <label class="col-sm-6 col-form-label col-form-label-sm" for="selectedSpecies">Species</label>
+                        <select class="col-sm-6 form-control form-control-sm" id="selectedDataset"
                                 v-model="selectedSpeciesId">
                             <option value="null">-- ALL --</option>
                             <option v-for="species in availableSpecies" :key="species.id" :value="species.id">[[
@@ -48,15 +54,15 @@
                     </div>
 
                     <div class="form-group">
-                        <label class="col-form-label col-form-label-sm" for="onlyRecentOccurrences">Show only recent (2019+) occurrences</label>
                         <input type="checkbox"  id="onlyRecentOccurrences"
                                        v-model="onlyRecentOccurrences">
+                        <label class="col-form-label col-form-label-sm" for="onlyRecentOccurrences">Show only recent (2019+) occurrences</label>
                     </div>
 
-                    <h3>Map style</h3>
-                    <div class="form-group">
-                        <label for="selectedLayer">Layer type</label>
-                        <select class="form-control form-control-sm" id="selectedLayer" v-model="visibleLayer">
+                    <h4 class="text-center">Map style</h4>
+                    <div class="form-group row">
+                        <label class="col-sm-6 col-form-label col-form-label-sm" for="selectedLayer">Layer type</label>
+                        <select class="col-sm-6 form-control form-control-sm" id="selectedLayer" v-model="visibleLayer">
                             <option>pointsLayer</option>
                             <option>clusterLayer</option>
                             <option>heatmapLayer</option>
@@ -88,7 +94,7 @@
 
                     <h2>Map view</h2>
                     <dashboard-map v-if="occurrences" :occurrences="occurrences"
-                                   :initial-lat="50.63" :initial-lon="4.67" :initial-zoom="8"
+                                   :initial-lat="51.58" :initial-lon="4.67" :initial-zoom="7"
                                    :heatmap-blur="heatmapBlur" :heatmap-radius="heatmapRadius"
                                    :visible-layer="visibleLayer"
                     ></dashboard-map>

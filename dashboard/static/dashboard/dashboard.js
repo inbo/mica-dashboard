@@ -48,7 +48,7 @@ Vue.component('dashboard-table', {
     data: function () {
         return {
             currentPage: 1,
-            pageSize: 20,
+            pageSize: 15,
 
             sortBy: 'id', // Entry for 'id' in the 'cols' objects
 
@@ -292,5 +292,5 @@ Vue.component('dashboard-map', {
         this.setLayerVisibility(this.visibleLayer);
         this.$emit('finished-mounting');
     },
-    template: '<div id="map" class="map" ref="map-root" style="height: 640px; width: 100%;"></div>'
+    template: '<div id="map" class="map" ref="map-root" style="height: 500px; width: 100%;"></div>'
 })
