@@ -97,7 +97,7 @@ Vue.component('dashboard-table', {
                         </thead>                 
                         <occurrence-table-page :occurrences="occurrencesCurrentPage"></occurrence-table-page>
                     </table>
-                    <p> 
+                    <p class="text-center"> 
                         <button type="button" :disabled="!hasPreviousPage" class="btn btn-outline-primary btn-sm" @click="currentPage -= 1">Previous</button>
                         Page {{ currentPage }} / {{ numberOfPages }}
                         <button type="button" :disabled="!hasNextPage" class="btn btn-outline-primary btn-sm" @click="currentPage += 1">Next</button>

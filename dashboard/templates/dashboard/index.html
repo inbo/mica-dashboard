@@ -30,10 +30,10 @@
             <div class="row">
                 <div class="col-3 bg-dark text-white shadow">
                 <form>
-                    <h4 class="text-center">Data filtering</h4>
+                    <h4 class="my-3 text-center">Data filtering</h4>
                     <div class="form-group row">
                         <label class="col-sm-6 col-form-label col-form-label-sm" for="selectedDataset">Source dataset</label>
-                        <select class="col-sm-6 form-control form-control-sm" id="selectedDataset"
+                        <select class="col-sm-5 form-control form-control-sm" id="selectedDataset"
                                     v-model="selectedDatasetId">
                             <option value="null">-- ALL --</option>
                             <option v-for="dataset in availableDatasets" :key="dataset.id" :value="dataset.id">[[
@@ -44,7 +44,7 @@
 
                     <div class="form-group row">
                         <label class="col-sm-6 col-form-label col-form-label-sm" for="selectedSpecies">Species</label>
-                        <select class="col-sm-6 form-control form-control-sm" id="selectedDataset"
+                        <select class="col-sm-5 form-control form-control-sm" id="selectedDataset"
                                 v-model="selectedSpeciesId">
                             <option value="null">-- ALL --</option>
                             <option v-for="species in availableSpecies" :key="species.id" :value="species.id">[[
@@ -59,13 +59,11 @@
                         <label class="col-form-label col-form-label-sm" for="onlyRecentOccurrences">Show only recent (2019+) occurrences</label>
                     </div>
 
-                    <h4 class="text-center">Map style</h4>
+                    <h4 class="my-3 text-center">Map style</h4>
                     <div class="form-group row">
                         <label class="col-sm-6 col-form-label col-form-label-sm" for="selectedLayer">Layer type</label>
-                        <select class="col-sm-6 form-control form-control-sm" id="selectedLayer" v-model="visibleLayer">
-                            <option>pointsLayer</option>
-                            <option>clusterLayer</option>
-                            <option>heatmapLayer</option>
+                        <select class="col-sm-5 form-control form-control-sm" id="selectedLayer" v-model="visibleLayer">
+                            <option v-for="layer in layerTypes" :value="layer.id">[[ layer.label ]]</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -126,6 +124,12 @@
                             selectedSpeciesId: null,
 
                             onlyRecentOccurrences: true,
+
+                            layerTypes: [
+                                {id: 'pointsLayer', label:'Points (WebGL)'},
+                                {id: 'clusterLayer', label:'Clusters'},
+                                {id: 'heatmapLayer', label:'Heatmap'}
+                            ],
 
                             heatmapBlur: 15,
                             heatmapRadius: 2,
