@@ -31,6 +31,8 @@ Vue.component('occurrence-table-page', {
                     <th scope="row">{{ occ.id }}</th>
                     <td>{{ occ.lat }}</td>
                     <td>{{ occ.lon }}</td>
+                    <td>{{ occ.speciesId }}</td>
+                    <td>{{ occ.datasetId }}</td>
                  </tr>
                </tbody>`
 });
@@ -57,6 +59,8 @@ Vue.component('dashboard-table', {
                 {'id': 'id', 'label': '#', 'dataAttribute': 'id'},
                 {'id': 'lat', 'label': 'Lat', 'dataAttribute': 'lat'},
                 {'id': 'lon', 'label': 'Lon', 'dataAttribute': 'lon'},
+                {'id': 'speciesId', 'label': 'Species ID', 'dataAttribute': 'speciesId'},
+                {'id': 'datasetId', 'label': 'Dataset ID', 'dataAttribute': 'datasetId'}
             ]
         }
     },
@@ -87,7 +91,7 @@ Vue.component('dashboard-table', {
         }
     },
     template: `<div id="table-outer">
-                    <table class="table table-striped table-sm">
+                    <table v-if="numberOfOccurrences > 0" class="table table-striped table-sm">
                         <thead class="thead-dark">
                             <tr>
                                 <th :class="{ 'text-primary': (sortBy == col.id) } " v-for="col in cols" scope="col">
@@ -97,7 +101,7 @@ Vue.component('dashboard-table', {
                         </thead>                 
                         <occurrence-table-page :occurrences="occurrencesCurrentPage"></occurrence-table-page>
                     </table>
-                    <p class="text-center"> 
+                    <p v-if="numberOfOccurrences > 0" class="text-center"> 
                         <button type="button" :disabled="!hasPreviousPage" class="btn btn-outline-primary btn-sm" @click="currentPage -= 1">Previous</button>
                         Page {{ currentPage }} / {{ numberOfPages }}
                         <button type="button" :disabled="!hasNextPage" class="btn btn-outline-primary btn-sm" @click="currentPage += 1">Next</button>

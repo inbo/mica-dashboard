@@ -40,6 +40,7 @@ def _extract_bool_request(request, param_name):
     else:
         return False
 
+
 @cache_page(60 * 120)
 def occurrences_csv(request):
     # Create the HttpResponse object with the appropriate CSV header.
@@ -61,6 +62,6 @@ def occurrences_csv(request):
     writer = csv.writer(response)
     for o in objects:
         if o.location:
-            writer.writerow([o.pk, o.location.x, o.location.y])
+            writer.writerow([o.pk, o.location.x, o.location.y, o.species_id, o.source_dataset_id])
 
     return response

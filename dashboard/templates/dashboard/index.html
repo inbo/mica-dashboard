@@ -208,7 +208,7 @@
                             return clonedObj;
                         },
                         getAndReplaceOccurrenceData: function () {
-                            var vm = this;
+                            let vm = this;
 
                             this.loading = true;
                             $.ajax({
@@ -216,12 +216,20 @@
                                 data: vm.queryFiltersData,
                                 dataType: "text"
                             }).done(function (data) {
-                                var dataLines = data.split('\n');
-                                var newOccurrences = []
-                                dataLines.forEach(function (row) {
+                                let newOccurrences = [];
+
+                                if (data !== "") {
+                                    data.split('\n').forEach(function (row) {
                                     var splitted = row.split(',')
-                                    newOccurrences.push({id: splitted[0], lon: splitted[1], lat: splitted[2]});
-                                });
+                                    newOccurrences.push({
+                                        id: splitted[0],
+                                        lon: splitted[1],
+                                        lat: splitted[2],
+                                        speciesId: splitted[3],
+                                        datasetId: splitted[4]}
+                                        );
+                                    });
+                                }
                                 vm.occurrences = newOccurrences;
                                 vm.loading = false;
                             });
