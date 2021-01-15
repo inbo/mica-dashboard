@@ -25,7 +25,7 @@ SECRET_KEY = 'USE SOMETHING SECURE HERE!'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["0.0.0.0"]
+ALLOWED_HOSTS = ["0.0.0.0", "cc42aed8cd44.ngrok.io"]
 
 
 # Application definition
@@ -38,6 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.gis',
+
+    'django_elasticsearch_dsl',
 
     'dashboard'
 ]
@@ -131,6 +133,12 @@ CACHES = {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
         'LOCATION': 'unique-snowflake',
     }
+}
+
+ELASTICSEARCH_DSL={
+    'default': {
+        'hosts': 'es:9200'
+    },
 }
 
 DATASET_CONFIG = (

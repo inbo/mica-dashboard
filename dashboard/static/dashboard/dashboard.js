@@ -192,6 +192,11 @@ Vue.component('dashboard-map', {
                 return (l.get('name') == 'heatmapLayer')
             });
         },
+        vectorTilesLayer: function () {
+            return this.dataLayers.find(function (l) {
+                return (l.get('name') == 'vectorTilesLayer')
+            });
+        },
     },
     methods: {
         setLayerVisibility: function (layerName) {
@@ -255,6 +260,26 @@ Vue.component('dashboard-map', {
             l.set('dataLayer', true);
             return l;
         },
+        createVectorTilesLayer: function() {
+            var l = new ol.layer.VectorTile({
+                source: new ol.source.VectorTile({
+                    format: new ol.format.MVT(),
+                    url: 'http://0.0.0.0:8000/api/tiles/{z}/{x}/{y}.mvt',
+                    //projection: 'EPSG:4326',
+                }),
+                style: new ol.style.Style({
+                    image: new ol.style.Circle({
+                        fill: new ol.style.Fill({color: 'rgba(0, 128, 0, 1)'}),
+                        stroke: new ol.style.Stroke({color: '#000000', width: 1.25}),
+                        radius: 15
+                    })
+                })
+            });
+
+            l.set('name', 'vectorTilesLayer')
+            l.set('dataLayer', true);
+            return l;
+        },
         createPointsLayer: function () {
             var l = new ol.layer.WebGLPoints({
                 source: this.vectorSource,
@@ -281,7 +306,8 @@ Vue.component('dashboard-map', {
                     baseLayer,
                     this.createClusterLayer(),
                     this.createHeatmapLayer(),
-                    this.createPointsLayer()
+                    this.createPointsLayer(),
+                    this.createVectorTilesLayer()
                 ],
                 view: new ol.View({
                     center: ol.proj.fromLonLat([this.initialLon, this.initialLat]),
