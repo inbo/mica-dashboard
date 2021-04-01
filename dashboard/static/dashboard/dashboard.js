@@ -114,6 +114,8 @@ Vue.component('dashboard-map', {
     props: {
         'occurrences': Array,
 
+        'minMaxUrl': String,
+
         'initialLat': Number,
         'initialLon': Number,
         'initialZoom': Number,
@@ -134,6 +136,8 @@ Vue.component('dashboard-map', {
             clusterStyleCache: {},
             map: null,
             vectorSource: new ol.source.Vector(),
+            HexMinOccCount: 1,
+            HexMaxOccCount: 1
         }
     },
     watch: {
@@ -169,6 +173,11 @@ Vue.component('dashboard-map', {
         },
     },
     computed: {
+        colorScale: function () {
+            return d3.scaleSequential(d3.interpolateReds)
+                .domain([this.HexMinOccCount, this.HexMaxOccCount])
+
+        },
         allLayers: function () {
             return this.map.getLayers().getArray();
         },
@@ -261,6 +270,7 @@ Vue.component('dashboard-map', {
             return l;
         },
         createVectorTilesLayer: function () {
+            var vm = this;
             var l = new ol.layer.VectorTile({
                 source: new ol.source.VectorTile({
                     format: new ol.format.MVT(),
@@ -269,40 +279,17 @@ Vue.component('dashboard-map', {
                 }),
                 style: function (feature) {
                     //console.log("Feature:", feature)
-                    var opacity = feature.properties_.count / 50;
+                    //var opacity = feature.properties_.count / 50;
                     return new ol.style.Style({
                         stroke: new ol.style.Stroke({
-                            color: 'blue',
+                            color: 'white',
                             width: 1,
                         }),
                         fill: new ol.style.Fill({
-                            color: 'rgba(0, 0, 255, ' + opacity + ')',
+                            color: vm.colorScale(feature.properties_.count)
                         }),
                     })
                 }
-                /*style: function(feature) {
-                    return new ol.style.Style({
-                        image: new ol.style.Circle({
-                            fill: new ol.style.Fill({color: 'rgba(0, 128, 0, 0.4)'}),
-                            //stroke: new ol.style.Stroke({color: '#000000', width: 1.25}),
-                            radius: function (feature) {
-                                //console.log(feature);
-                                //return feature.properties.count;
-                                //return (feature.properties_.count > 50) ? 50: feature.properties_.count
-                                v = Math.log(feature.properties_.count) * 5;
-                                return (v <= 30) ? v : 30
-                                //return 10;
-                            }(feature)
-                        })
-                    })
-                },*/
-                /*style: new ol.style.Style({
-                    image: new ol.style.Circle({
-                        fill: new ol.style.Fill({color: 'rgba(0, 128, 0, 1)'}),
-                        stroke: new ol.style.Stroke({color: '#000000', width: 1.25}),
-                        radius: 15
-                    })
-                })*/
             });
 
             l.set('name', 'vectorTilesLayer')
@@ -325,6 +312,18 @@ Vue.component('dashboard-map', {
             l.set('dataLayer', true);
             return l;
         },
+        loadOccMinMax: function (zoomLevel) {
+            var vm = this;
+            $.ajax({
+                url: this.minMaxUrl,
+                data: {zoom: zoomLevel}
+            }).done(function (data) {
+                //console.log(data)
+                vm.HexMinOccCount = data.min;
+                vm.HexMaxOccCount = data.max;
+            })
+
+        },
         createMap: function () {
             var baseLayer = new ol.layer.Tile({
                 source: new ol.source.OSM({url: "http://a.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"})
@@ -346,6 +345,7 @@ Vue.component('dashboard-map', {
         }
     },
     mounted() {
+        this.loadOccMinMax(this.initialZoom);
         this.map = this.createMap();
         this.map.setTarget(this.$refs['map-root']); // Assign the map to div and display
         this.setLayerVisibility(this.visibleLayer);

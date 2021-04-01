@@ -92,9 +92,10 @@
 
                     <h2>Map view</h2>
                     <dashboard-map v-if="occurrences" :occurrences="occurrences"
-                                   :initial-lat="51.58" :initial-lon="4.67" :initial-zoom="7"
+                                   :initial-lat="51.58" :initial-lon="4.67" :initial-zoom="initialZoomLevel"
                                    :heatmap-blur="heatmapBlur" :heatmap-radius="heatmapRadius"
                                    :visible-layer="visibleLayer"
+                                   :min-max-url="minMaxOccCountUrl"
                     ></dashboard-map>
 
                     <h2>Table view</h2>
@@ -123,6 +124,8 @@
                             availableSpecies: [],
                             selectedSpeciesId: null,
 
+                            minMaxOccCountUrl: "{% url 'dashboard-api-min-max-in-grid' %}",
+
                             onlyRecentOccurrences: true,
 
                             layerTypes: [
@@ -131,6 +134,8 @@
                                 {id: 'heatmapLayer', label:'Heatmap'},
                                 {id: 'vectorTilesLayer', label:'Vector Tiles'}
                             ],
+
+                            initialZoomLevel: 7,
 
                             heatmapBlur: 15,
                             heatmapRadius: 2,

@@ -1,5 +1,4 @@
 import csv
-import math
 from datetime import datetime
 
 from django.http import HttpResponse, JsonResponse
@@ -71,8 +70,7 @@ def occurrences_csv(request):
     return response
 
 
-def mvt_tiles(request, zoom, x, y):
-    zoom_to_hex_size = {
+ZOOM_TO_HEX_SIZE = {
         3: 100000,
         4: 20000,
         5: 20000,
@@ -83,11 +81,10 @@ def mvt_tiles(request, zoom, x, y):
         10: 1250,
         11: 675,
         12: 330
-    }
+}
 
-    template = """
-            WITH grid AS (
-                SELECT COUNT(*), hexes.geom
+GRID_QUERY_FRAGMENT = """
+    SELECT COUNT(*), hexes.geom
                     FROM
                         ST_HexagonGrid(
                             {{ hex_size_meters }},
@@ -97,10 +94,44 @@ def mvt_tiles(request, zoom, x, y):
                     dashboard_occurrence
                     ON ST_Intersects(dashboard_occurrence.location, hexes.geom)
                     GROUP BY hexes.geom
+    """
+
+
+def occ_min_max_in_grid(request):
+    """ Returns the min, max occurrences count per hexagon, according to the zoom level"""
+    zoom = _extract_int_request(request, 'zoom')
+
+    template = f"""
+    WITH grid AS (
+                {GRID_QUERY_FRAGMENT}
+            )
+            
+            SELECT MIN(count), MAX(count) FROM grid;   
+    """
+
+    template = ' '.join(template.replace('\n', '').split())  # Remove multiple withespaces and \n for easier inspection
+
+    data = {
+        "hex_size_meters": ZOOM_TO_HEX_SIZE[zoom]
+    }
+
+    cursor = connection.cursor()
+    j = JinjaSql()
+
+    query, bind_params = j.prepare_query(template, data)
+    cursor.execute(query, bind_params)
+    r = cursor.fetchone()
+    return JsonResponse({'min': r[0], 'max': r[1]})
+
+
+def mvt_tiles(request, zoom, x, y):
+    template = f"""
+            WITH grid AS (
+                {GRID_QUERY_FRAGMENT}
             )   
 
             ,mvtgeom AS (
-                SELECT ST_AsMVTGeom(geom, TileBBox({{ zoom }}, {{ x }}, {{ y }}, 3857)) AS geom, count FROM grid
+                SELECT ST_AsMVTGeom(geom, TileBBox({{{{{ zoom }}}}}, {{{{{ x }}}}}, {{{{{ y }}}}}, 3857)) AS geom, count FROM grid
             )
 
             SELECT st_asmvt(mvtgeom.*) FROM mvtgeom;
@@ -109,7 +140,7 @@ def mvt_tiles(request, zoom, x, y):
     template = ' '.join(template.replace('\n', '').split())  # Remove multiple withespaces and \n for easier inspection
 
     data = {
-        "hex_size_meters": zoom_to_hex_size[zoom],
+        "hex_size_meters": ZOOM_TO_HEX_SIZE[zoom],
         "zoom": zoom,
         "x": x,
         "y": y
