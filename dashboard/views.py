@@ -88,13 +88,30 @@ def linear_scale(min, max, min1, max1, val):
 MIN_ZOOM_LEVEL = 0
 MAX_ZOOM_LEVEL = 22
 MIN_GEOHASH_LENGTH = 1
-MAX_GEOHASH_LENGTH = 12
+MAX_GEOHASH_LENGTH = 8
+
 
 def mvt_tiles(request, zoom, x, y):
     tile_topleft = num2deg(x, y, zoom)
     tile_bottomright = num2deg(x + 1, y + 1, zoom)
 
-    geohash_precision = math.floor(linear_scale(MIN_ZOOM_LEVEL, MAX_ZOOM_LEVEL, MIN_GEOHASH_LENGTH, MAX_GEOHASH_LENGTH, zoom))
+    zoom_to_precision = {
+        4: 3,
+        5: 4,
+        6: 4,
+        7: 4,
+        8: 5,
+        9: 5,
+        10: 6,
+        11: 6,
+        12: 6,
+        13: 7,
+        14: 7
+    }
+
+    #geohash_precision = math.floor(linear_scale(MIN_ZOOM_LEVEL, MAX_ZOOM_LEVEL, MIN_GEOHASH_LENGTH, MAX_GEOHASH_LENGTH, zoom))
+    geohash_precision = zoom_to_precision[zoom]
+    print(f"Zoom: {zoom}, precision: {geohash_precision}")
 
     es_response = OccurrenceDocument.search().from_dict({
         "aggs": {
@@ -122,25 +139,56 @@ def mvt_tiles(request, zoom, x, y):
     cursor = connection.cursor()
     j = JinjaSql()
 
-    template = """
-        SELECT ST_AsMVT(mvtgeom.*) FROM (
-            SELECT ST_AsMVTGeom(
-                ST_Union(ARRAY[{% for geocode in geocodes %}st_pointfromgeohash({{ geocode }}){% if not loop.last %},{% endif %} {% endfor %}]::geometry[]), 
-                TileBBox({{ zoom }}, {{ x }}, {{ y }}, 4326)
-            ) AS geom, 1436::int AS "count") mvtgeom
-    """
+    # template = """
+    #     SELECT ST_AsMVT(mvtgeom.*) FROM (
+    #         SELECT ST_AsMVTGeom(
+    #             ST_Union(ARRAY[{% for geocode in geocodes %}st_pointfromgeohash({{ geocode }}){% if not loop.last %},{% endif %} {% endfor %}]::geometry[]),
+    #             TileBBox({{ zoom }}, {{ x }}, {{ y }}, 4326)
+    #         ) AS geom, 1436::int AS "count") mvtgeom
+    # """
+    #
+    # data = {
+    #     "zoom": zoom,
+    #     "geocodes": [bucket['key'] for bucket in es_response.aggregations.zoomedin.zoom1.buckets],
+    #     "x": x,
+    #     "y": y
+    # }
+    if len(es_response.aggregations.zoomedin.zoom1.buckets) > 0:
+        template = """
+        WITH points AS (
+            SELECT * FROM (VALUES
+                                  {% for bucket in buckets %}
+                                    (st_pointfromgeohash({{ bucket.key }}), {{ bucket.doc_count }})
+                                  {% if not loop.last %},{% endif %}
+                                  {% endfor %}
+                                ) AS t (geom, count)
+        )
+    
+        ,mvtgeom AS (
+            SELECT ST_AsMVTGeom(geom, TileBBox({{ zoom }}, {{ x }}, {{ y }}, 4326)) AS geom, count FROM points
+        )
+    
+        SELECT st_asmvt(mvtgeom.*) FROM mvtgeom;
+        """
 
-    data = {
-        "zoom": zoom,
-        "geocodes": [bucket['key'] for bucket in es_response.aggregations.zoomedin.zoom1.buckets],
-        "x": x,
-        "y": y
-    }
+        data = {
+             "zoom": zoom,
+             "buckets": es_response.aggregations.zoomedin.zoom1.buckets,
+             "x": x,
+             "y": y
+        }
 
-    query, bind_params = j.prepare_query(template, data)
-    cursor.execute(query, bind_params)
-    row = cursor.fetchone()
-    return HttpResponse(row[0].tobytes(), content_type='application/vnd.mapbox-vector-tile')
+        query, bind_params = j.prepare_query(template, data)
+        cursor.execute(query, bind_params)
+        row = cursor.fetchone()
+        return HttpResponse(row[0].tobytes(), content_type='application/vnd.mapbox-vector-tile')
+    else:
+        return HttpResponse('', content_type='application/vnd.mapbox-vector-tile')
+
+    # TODO: tile boundaries
+    # TODO: filtering
+    # TODO: better geohash/zoom level combination
+    # TODO: better circle size
 
     # Old code: keep for reference?
     # stunion_params = ','.join([f"st_pointfromgeohash('{bucket['key']}')" for bucket in es_response.aggregations.zoomedin.zoom1.buckets])

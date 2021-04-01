@@ -267,13 +267,29 @@ Vue.component('dashboard-map', {
                     url: 'http://0.0.0.0:8000/api/tiles/{z}/{x}/{y}.mvt',
                     //projection: 'EPSG:4326',
                 }),
-                style: new ol.style.Style({
+                style: function(feature) {
+                    return new ol.style.Style({
+                        image: new ol.style.Circle({
+                            fill: new ol.style.Fill({color: 'rgba(0, 128, 0, 0.4)'}),
+                            //stroke: new ol.style.Stroke({color: '#000000', width: 1.25}),
+                            radius: function (feature) {
+                                //console.log(feature);
+                                //return feature.properties.count;
+                                //return (feature.properties_.count > 50) ? 50: feature.properties_.count
+                                v = Math.log(feature.properties_.count) * 5;
+                                return (v <= 30) ? v : 30
+                                //return 10;
+                            }(feature)
+                        })
+                    })
+                },
+                /*style: new ol.style.Style({
                     image: new ol.style.Circle({
                         fill: new ol.style.Fill({color: 'rgba(0, 128, 0, 1)'}),
                         stroke: new ol.style.Stroke({color: '#000000', width: 1.25}),
                         radius: 15
                     })
-                })
+                })*/
             });
 
             l.set('name', 'vectorTilesLayer')
