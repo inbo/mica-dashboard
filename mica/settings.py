@@ -39,8 +39,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.gis',
 
-    'django_elasticsearch_dsl',
-
     'dashboard'
 ]
 
@@ -133,12 +131,6 @@ CACHES = {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
         'LOCATION': 'unique-snowflake',
     }
-}
-
-ELASTICSEARCH_DSL={
-    'default': {
-        'hosts': 'es:9200'
-    },
 }
 
 DATASET_CONFIG = (
