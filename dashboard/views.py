@@ -12,6 +12,7 @@ from jinjasql import JinjaSql
 from .documents import OccurrenceDocument
 from .models import Occurrence, Dataset, Species
 
+
 def index(request):
     return render(request, "dashboard/index.html")
 
@@ -92,6 +93,62 @@ MAX_GEOHASH_LENGTH = 8
 
 
 def mvt_tiles(request, zoom, x, y):
+    zoom_to_hex_size = {
+        3: 100000,
+        4: 20000,
+        5: 20000,
+        6: 20000,
+        7: 10000,
+        8: 5000,
+        9: 2500,
+        10: 1250,
+        11: 675,
+        12: 330
+    }
+
+    template = """
+            WITH grid AS (
+                SELECT COUNT(*), hexes.geom
+                    FROM
+                        ST_HexagonGrid(
+                            {{ hex_size_meters }},
+                            ST_SetSRID(ST_EstimatedExtent('dashboard_occurrence', 'location'), 3857)
+                        ) AS hexes
+                    INNER JOIN
+                    dashboard_occurrence
+                    ON ST_Intersects(dashboard_occurrence.location, hexes.geom)
+                    GROUP BY hexes.geom
+            )   
+
+            ,mvtgeom AS (
+                SELECT ST_AsMVTGeom(geom, TileBBox({{ zoom }}, {{ x }}, {{ y }}, 3857)) AS geom, count FROM grid
+            )
+
+            SELECT st_asmvt(mvtgeom.*) FROM mvtgeom;
+            """
+
+    template = ' '.join(template.replace('\n', '').split())  # Remove multiple withespaces and \n for easier inspection
+
+    data = {
+        "hex_size_meters": zoom_to_hex_size[zoom],
+        "zoom": zoom,
+        "x": x,
+        "y": y
+    }
+
+    cursor = connection.cursor()
+    j = JinjaSql()
+
+    query, bind_params = j.prepare_query(template, data)
+    cursor.execute(query, bind_params)
+    if cursor.rowcount != 0:
+        row = cursor.fetchone()
+        return HttpResponse(row[0].tobytes(), content_type='application/vnd.mapbox-vector-tile')
+    else:
+        return HttpResponse('', content_type='application/vnd.mapbox-vector-tile')
+
+
+def old_mvt_tiles(request, zoom, x, y):
     tile_topleft = num2deg(x, y, zoom)
     tile_bottomright = num2deg(x + 1, y + 1, zoom)
 

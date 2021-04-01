@@ -56,7 +56,8 @@ class Command(BaseCommand):
                 # Some catches have no location...
                 try:
                     point = Point(truncate(float(row.data[qn('decimalLongitude')]), COORDINATES_DECIMAL_PLACES),
-                                  truncate(float(row.data[qn('decimalLatitude')]), COORDINATES_DECIMAL_PLACES))
+                                  truncate(float(row.data[qn('decimalLatitude')]), COORDINATES_DECIMAL_PLACES),
+                                  srid=4326)
                 except ValueError:
                     point = None
 

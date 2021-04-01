@@ -260,14 +260,27 @@ Vue.component('dashboard-map', {
             l.set('dataLayer', true);
             return l;
         },
-        createVectorTilesLayer: function() {
+        createVectorTilesLayer: function () {
             var l = new ol.layer.VectorTile({
                 source: new ol.source.VectorTile({
                     format: new ol.format.MVT(),
                     url: 'http://0.0.0.0:8000/api/tiles/{z}/{x}/{y}.mvt',
                     //projection: 'EPSG:4326',
                 }),
-                style: function(feature) {
+                style: function (feature) {
+                    //console.log("Feature:", feature)
+                    var opacity = feature.properties_.count / 50;
+                    return new ol.style.Style({
+                        stroke: new ol.style.Stroke({
+                            color: 'blue',
+                            width: 1,
+                        }),
+                        fill: new ol.style.Fill({
+                            color: 'rgba(0, 0, 255, ' + opacity + ')',
+                        }),
+                    })
+                }
+                /*style: function(feature) {
                     return new ol.style.Style({
                         image: new ol.style.Circle({
                             fill: new ol.style.Fill({color: 'rgba(0, 128, 0, 0.4)'}),
@@ -282,7 +295,7 @@ Vue.component('dashboard-map', {
                             }(feature)
                         })
                     })
-                },
+                },*/
                 /*style: new ol.style.Style({
                     image: new ol.style.Circle({
                         fill: new ol.style.Fill({color: 'rgba(0, 128, 0, 1)'}),
