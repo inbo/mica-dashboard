@@ -66,41 +66,23 @@
                             <option v-for="layer in layerTypes" :value="layer.id">[[ layer.label ]]</option>
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label for="heatmapRadius">Heatmap radius</label>
-                        <input id="heatmapRadius" type="range" min="1" max="10" v-model.number="heatmapRadius"
-                               :disabled="visibleLayer !== 'heatmapLayer'">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="heatmapBlur">Heatmap blur</label>
-                        <input id="heatmapBlur" type="range" min="1" max="50" v-model.number="heatmapBlur"
-                               :disabled="visibleLayer !== 'heatmapLayer'">
-                    </div>
                 </form>
             </div>
 
                 <div class="col-9">
-                <transition name="fade">
-                    <div v-if="loading" class="alert alert-primary" role="alert">
-                        <h6>Please wait...</h6>
-                        Data is loading...
-                    </div>
-                </transition>
-                <div v-if="!loading">
+
                     <p class="alert alert-primary" role="alert">[[ occurrencesCounter ]] occurrence(s) found.</p>
 
                     <h2>Map view</h2>
-                    <dashboard-map v-if="occurrences" :occurrences="occurrences"
+                    <dashboard-map
                                    :initial-lat="51.58" :initial-lon="4.67" :initial-zoom="initialZoomLevel"
-                                   :heatmap-blur="heatmapBlur" :heatmap-radius="heatmapRadius"
                                    :visible-layer="visibleLayer"
                                    :min-max-url="minMaxOccCountUrl"
                     ></dashboard-map>
 
                     <h2>Table view</h2>
                     <dashboard-table :occurrences="occurrences"></dashboard-table>
-                </div>
+
                 </div>
             </div>
         </div>
@@ -113,8 +95,8 @@
                     delimiters: ['[[', ']]'],
                     data() {
                         return {
-                            occurrencesCsvUrl: "{% url 'dashboard-api-occurrences_csv' %}",
-                            occurrences: null, // Array of objects: [{id: 1234, lon: 5.32, lat:50.12}, ...],
+                            //occurrencesCsvUrl: "{% url 'dashboard-api-occurrences_csv' %}",
+                            occurrences: [], // Array of objects: [{id: 1234, lon: 5.32, lat:50.12}, ...],
 
                             availableDatasetsUrl: "{% url 'dashboard-api-available-datasets' %}",
                             availableDatasets: [],
@@ -129,20 +111,15 @@
                             onlyRecentOccurrences: true,
 
                             layerTypes: [
-                                {id: 'pointsLayer', label:'Points (WebGL)'},
-                                {id: 'clusterLayer', label:'Clusters'},
-                                {id: 'heatmapLayer', label:'Heatmap'},
                                 {id: 'vectorTilesLayer', label:'Vector Tiles'}
                             ],
 
                             initialZoomLevel: 7,
 
-                            heatmapBlur: 15,
-                            heatmapRadius: 2,
                             visibleLayer: 'vectorTilesLayer',
 
-                            loadingMessage: '',
-                            loading: true
+                            //loadingMessage: '',
+                            //loading: true
                         }
                     },
                     computed: {
@@ -163,25 +140,19 @@
                     mounted() {
                         this.populateDatasetSelect();
                         this.populateSpeciesSelect();
-                        this.getAndReplaceOccurrenceData();
                     },
 
                     watch: {
                         'selectedDatasetId': {
                             handler: function (newVal) {
-                                this.getAndReplaceOccurrenceData();
+                                //this.getAndReplaceOccurrenceData();
                             },
                         },
                         'selectedSpeciesId': {
                             handler: function (newVal) {
-                                this.getAndReplaceOccurrenceData();
+                                //this.getAndReplaceOccurrenceData();
                             },
                         },
-                        'onlyRecentOccurrences': {
-                            handler: function (newVal) {
-                                this.getAndReplaceOccurrenceData();
-                            },
-                        }
                     },
                     methods: {
                         populateSpeciesSelect: function () {
@@ -200,9 +171,6 @@
                                 vm.availableDatasets = data;
                             })
                         },
-                        finishedMountingMap: function () {
-                            this.loading = false;
-                        },
                         clean: function (obj) {
                             // Remove undefined or null properties from an object
                             clonedObj = Object.assign({}, obj);
@@ -213,7 +181,7 @@
                             }
                             return clonedObj;
                         },
-                        getAndReplaceOccurrenceData: function () {
+                        /*getAndReplaceOccurrenceData: function () {
                             let vm = this;
 
                             this.loading = true;
@@ -239,7 +207,7 @@
                                 vm.occurrences = newOccurrences;
                                 vm.loading = false;
                             });
-                        }
+                        }*/
                     }
 
                 })
