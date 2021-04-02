@@ -153,11 +153,13 @@ Vue.component('dashboard-map', {
         'initialLon': Number,
         'initialZoom': Number,
 
-        'visibleLayer': String // "pointsLayer" | "clusterLayer" | "heatmapLayer"
+        'visibleLayer': String,
+
+        'filters': Object // For filtering occurrence data
     },
     data: function () {
         return {
-            clusterStyleCache: {},
+            //clusterStyleCache: {},
             map: null,
             vectorSource: new ol.source.Vector(),
             HexMinOccCount: 1,
@@ -170,6 +172,15 @@ Vue.component('dashboard-map', {
                 this.setLayerVisibility(val);
             },
         },
+        filters: {
+            deep: true,
+            handler: function (val) {
+                this.removeVectorTilesLayer();
+                var l = this.createVectorTilesLayer();
+                this.map.addLayer(l);
+            },
+        }
+
     },
     computed: {
         colorScale: function () {
@@ -201,12 +212,15 @@ Vue.component('dashboard-map', {
                 }
             })
         },
+        removeVectorTilesLayer: function() {
+            this.map.removeLayer(this.vectorTilesLayer);
+        },
         createVectorTilesLayer: function () {
             var vm = this;
             var l = new ol.layer.VectorTile({
                 source: new ol.source.VectorTile({
                     format: new ol.format.MVT(),
-                    url: 'http://0.0.0.0:8000/api/tiles/{z}/{x}/{y}.mvt',
+                    url: 'http://0.0.0.0:8000/api/tiles/{z}/{x}/{y}.mvt' + '?' + $.param(vm.filters),
                     //projection: 'EPSG:4326',
                 }),
                 style: function (feature) {

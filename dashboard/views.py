@@ -84,19 +84,6 @@ ZOOM_TO_HEX_SIZE = {
         12: 160
 }
 
-GRID_QUERY_FRAGMENT = """
-    SELECT COUNT(*), hexes.geom
-                    FROM
-                        ST_HexagonGrid(
-                            {{ hex_size_meters }},
-                            ST_SetSRID(ST_EstimatedExtent('dashboard_occurrence', 'location'), 3857)
-                        ) AS hexes
-                    INNER JOIN
-                    dashboard_occurrence
-                    ON ST_Intersects(dashboard_occurrence.location, hexes.geom)
-                    GROUP BY hexes.geom
-    """
-
 
 def _request_to_occurrences_qs(request):
     """Takes a request, extract common parameters used to filter occurrences and return a corresponding QuerySet"""
@@ -111,7 +98,7 @@ def _request_to_occurrences_qs(request):
     if species_id:
         qs = qs.filter(species_id=species_id)
     if only_recent:
-        qs = qs.filter(date__range=['2019-01-01', datetime.today().strftime('%Y-%m-%d')])
+        qs = qs.filter(date__range=['2020-07-01', datetime.today().strftime('%Y-%m-%d')])
 
     return qs
 
@@ -130,9 +117,12 @@ def occ_min_max_in_grid(request):
     """ Returns the min, max occurrences count per hexagon, according to the zoom level"""
     zoom = _extract_int_request(request, 'zoom')
 
+    qs = _request_to_occurrences_qs(request)
+    matching_occurrences_ids = list(qs.values_list('id', flat=True))
+
     template = f"""
     WITH grid AS (
-                {GRID_QUERY_FRAGMENT}
+                {_get_grid_query_fragment()}
             )
             
             SELECT MIN(count), MAX(count) FROM grid;   
@@ -141,7 +131,8 @@ def occ_min_max_in_grid(request):
     template = ' '.join(template.replace('\n', '').split())  # Remove multiple withespaces and \n for easier inspection
 
     data = {
-        "hex_size_meters": ZOOM_TO_HEX_SIZE[zoom]
+        "hex_size_meters": ZOOM_TO_HEX_SIZE[zoom],
+        "occurrences_id": matching_occurrences_ids
     }
 
     cursor = connection.cursor()
@@ -153,35 +144,56 @@ def occ_min_max_in_grid(request):
     return JsonResponse({'min': r[0], 'max': r[1]})
 
 
+def _get_grid_query_fragment():
+    return """
+    SELECT COUNT(*), hexes.geom
+                    FROM
+                        ST_HexagonGrid(
+                            {{ hex_size_meters }},
+                            ST_SetSRID(ST_EstimatedExtent('dashboard_occurrence', 'location'), 3857)
+                        ) AS hexes
+                    INNER JOIN (SELECT * FROM dashboard_occurrence AS occ WHERE occ.id IN {{ occurrences_id | inclause }}) AS dashboard_filtered_occ
+                    
+                    
+                    ON ST_Intersects(dashboard_filtered_occ.location, hexes.geom)
+                    GROUP BY hexes.geom
+    """
+
+
 def mvt_tiles(request, zoom, x, y):
-    template = f"""
-            WITH grid AS (
-                {GRID_QUERY_FRAGMENT}
-            )   
+    qs = _request_to_occurrences_qs(request)
+    matching_occurrences_ids = list(qs.values_list('id', flat=True))
 
-            ,mvtgeom AS (
-                SELECT ST_AsMVTGeom(geom, TileBBox({{{{{ zoom }}}}}, {{{{{ x }}}}}, {{{{{ y }}}}}, 3857)) AS geom, count FROM grid
-            )
+    if len(matching_occurrences_ids) == 0:
+        return HttpResponse('', content_type='application/vnd.mapbox-vector-tile')
+    else:
+        template = f"""
+                WITH grid AS (
+                    {_get_grid_query_fragment()}
+                )   
+    
+                ,mvtgeom AS (
+                    SELECT ST_AsMVTGeom(geom, TileBBox({{{{{ zoom }}}}}, {{{{{ x }}}}}, {{{{{ y }}}}}, 3857)) AS geom, count FROM grid
+                )
+    
+                SELECT st_asmvt(mvtgeom.*) FROM mvtgeom;
+                """
 
-            SELECT st_asmvt(mvtgeom.*) FROM mvtgeom;
-            """
+        template = ' '.join(template.replace('\n', '').split())  # Remove multiple withespaces and \n for easier inspection
 
-    template = ' '.join(template.replace('\n', '').split())  # Remove multiple withespaces and \n for easier inspection
+        data = {
+            "hex_size_meters": ZOOM_TO_HEX_SIZE[zoom],
+            "occurrences_id": matching_occurrences_ids,
+            "zoom": zoom,
+            "x": x,
+            "y": y
+        }
 
-    data = {
-        "hex_size_meters": ZOOM_TO_HEX_SIZE[zoom],
-        "zoom": zoom,
-        "x": x,
-        "y": y
-    }
+        cursor = connection.cursor()
+        j = JinjaSql()
 
-    cursor = connection.cursor()
-    j = JinjaSql()
+        query, bind_params = j.prepare_query(template, data)
+        cursor.execute(query, bind_params)
 
-    query, bind_params = j.prepare_query(template, data)
-    cursor.execute(query, bind_params)
-    if cursor.rowcount != 0:
         row = cursor.fetchone()
         return HttpResponse(row[0].tobytes(), content_type='application/vnd.mapbox-vector-tile')
-    else:
-        return HttpResponse('', content_type='application/vnd.mapbox-vector-tile')
