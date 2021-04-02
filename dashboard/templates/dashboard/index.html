@@ -21,23 +21,30 @@
 {% block content-fixed %}
     <h1 class="display-4">MICA Dashboard</h1>
     <p class="font-weight-light">
-        The MICA dashboard shows data originating ... Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus nunc diam, iaculis et lectus vel, iaculis lobortis lectus. Curabitur magna felis, consectetur ac ante in, hendrerit aliquam erat. Nunc condimentum tellus ac diam rhoncus, sed facilisis libero placerat. Phasellus tempus felis vel mi blandit tristique. Donec porta, sapien vel scelerisque sollicitudin, arcu purus posuere risus, ut sagittis arcu est in mi. Cras finibus quam nibh, nec lobortis magna pretium ut. Duis lobortis ac nibh eu aliquet. Morbi vehicula faucibus augue sed sollicitudin. Pellentesque tincidunt sem eu vehicula eleifend. Nunc nec quam id dolor dictum congue et sed elit.
+        The MICA dashboard shows data originating ... Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus
+        nunc diam, iaculis et lectus vel, iaculis lobortis lectus. Curabitur magna felis, consectetur ac ante in,
+        hendrerit aliquam erat. Nunc condimentum tellus ac diam rhoncus, sed facilisis libero placerat. Phasellus tempus
+        felis vel mi blandit tristique. Donec porta, sapien vel scelerisque sollicitudin, arcu purus posuere risus, ut
+        sagittis arcu est in mi. Cras finibus quam nibh, nec lobortis magna pretium ut. Duis lobortis ac nibh eu
+        aliquet. Morbi vehicula faucibus augue sed sollicitudin. Pellentesque tincidunt sem eu vehicula eleifend. Nunc
+        nec quam id dolor dictum congue et sed elit.
     </p>
 {% endblock %}
 
 {% block content-fluid %}
-        <div id="app">
-            <div class="row">
-                <div class="col-3 bg-dark text-white shadow">
+    <div id="app">
+        <div class="row">
+            <div class="col-3 bg-dark text-white shadow">
                 <form>
                     <h4 class="my-3 text-center">Data filtering</h4>
                     <div class="form-group row">
-                        <label class="col-sm-6 col-form-label col-form-label-sm" for="selectedDataset">Source dataset</label>
+                        <label class="col-sm-6 col-form-label col-form-label-sm" for="selectedDataset">Source
+                            dataset</label>
                         <select class="col-sm-5 form-control form-control-sm" id="selectedDataset"
-                                    v-model="selectedDatasetId">
-                            <option value="null">-- ALL --</option>
+                                v-model="selectedFilters.datasetId">
+                            <option :value="null">-- ALL --</option>
                             <option v-for="dataset in availableDatasets" :key="dataset.id" :value="dataset.id">[[
-                                    dataset.name ]]
+                                dataset.name ]]
                             </option>
                         </select>
                     </div>
@@ -45,18 +52,19 @@
                     <div class="form-group row">
                         <label class="col-sm-6 col-form-label col-form-label-sm" for="selectedSpecies">Species</label>
                         <select class="col-sm-5 form-control form-control-sm" id="selectedDataset"
-                                v-model="selectedSpeciesId">
-                            <option value="null">-- ALL --</option>
+                                v-model="selectedFilters.speciesId">
+                            <option :value="null">-- ALL --</option>
                             <option v-for="species in availableSpecies" :key="species.id" :value="species.id">[[
-                                    species.name ]]
+                                species.name ]]
                             </option>
                         </select>
                     </div>
 
                     <div class="form-group">
-                        <input type="checkbox"  id="onlyRecentOccurrences"
-                                       v-model="onlyRecentOccurrences">
-                        <label class="col-form-label col-form-label-sm" for="onlyRecentOccurrences">Show only recent (2019+) occurrences</label>
+                        <input type="checkbox" id="onlyRecentOccurrences"
+                               v-model="selectedFilters.onlyRecent">
+                        <label class="col-form-label col-form-label-sm" for="onlyRecentOccurrences">Show only recent
+                            (2019+) occurrences</label>
                     </div>
 
                     <h4 class="my-3 text-center">Map style</h4>
@@ -69,148 +77,151 @@
                 </form>
             </div>
 
-                <div class="col-9">
+            <div class="col-9">
 
-                    <p class="alert alert-primary" role="alert">[[ occurrencesCounter ]] occurrence(s) found.</p>
+                <dashboard-occurrence-counter :filters="selectedFilters" :counter-url="endpoints.counterUrl"></dashboard-occurrence-counter>
 
-                    <h2>Map view</h2>
-                    <dashboard-map
-                                   :initial-lat="51.58" :initial-lon="4.67" :initial-zoom="initialZoomLevel"
-                                   :visible-layer="visibleLayer"
-                                   :min-max-url="minMaxOccCountUrl"
-                    ></dashboard-map>
+                <h2>Map view</h2>
+                <dashboard-map
+                        :initial-lat="51.58" :initial-lon="4.67" :initial-zoom="initialZoomLevel"
+                        :visible-layer="visibleLayer"
+                        :min-max-url="endpoints.minMaxOccCountUrl"
+                ></dashboard-map>
 
-                    <h2>Table view</h2>
-                    <dashboard-table :occurrences="occurrences"></dashboard-table>
+                <h2>Table view</h2>
+                <dashboard-table :occurrences="[]"></dashboard-table>
 
-                </div>
             </div>
         </div>
+    </div>
 
     <script type="text/javascript">
         window.onload = function () {
             Vue.config.devtools = true;
-            var App = new Vue({
-                    el: '#app',
-                    delimiters: ['[[', ']]'],
-                    data() {
-                        return {
-                            //occurrencesCsvUrl: "{% url 'dashboard-api-occurrences_csv' %}",
-                            occurrences: [], // Array of objects: [{id: 1234, lon: 5.32, lat:50.12}, ...],
+            new Vue({
+                el: '#app',
+                delimiters: ['[[', ']]'],
+                data() {
+                    return {
+                        //occurrencesCsvUrl: "{% url 'dashboard-api-occurrences_csv' %}",
+                        //occurrences: [], // Array of objects: [{id: 1234, lon: 5.32, lat:50.12}, ...],
 
+                        selectedFilters: {
+                            datasetId: null,
+                            speciesId: null,
+                            onlyRecent: true,
+                        },
+
+                        endpoints: {
                             availableDatasetsUrl: "{% url 'dashboard-api-available-datasets' %}",
-                            availableDatasets: [],
-                            selectedDatasetId: null,
-
                             availableSpeciesUrl: "{% url 'dashboard-api-available-species' %}",
-                            availableSpecies: [],
-                            selectedSpeciesId: null,
-
                             minMaxOccCountUrl: "{% url 'dashboard-api-min-max-in-grid' %}",
-
-                            onlyRecentOccurrences: true,
-
-                            layerTypes: [
-                                {id: 'vectorTilesLayer', label:'Vector Tiles'}
-                            ],
-
-                            initialZoomLevel: 7,
-
-                            visibleLayer: 'vectorTilesLayer',
-
-                            //loadingMessage: '',
-                            //loading: true
-                        }
-                    },
-                    computed: {
-                        occurrencesCounter: function () {
-                            return (this.occurrences ? this.occurrences.length : 0);
+                            counterUrl: "{% url 'dashboard-api-occurrences-counter' %}"
                         },
 
-                        queryFiltersData: function () {
-                            var obj = {
-                                datasetId: this.selectedDatasetId,
-                                speciesId: this.selectedSpeciesId,
-                                onlyRecent: this.onlyRecentOccurrences
-                            }
+                        availableDatasets: [],
+                        availableSpecies: [],
 
-                            return this.clean(obj); // It helps with server side caching if we don't request unnecessary GET params
-                        }
-                    },
-                    mounted() {
-                        this.populateDatasetSelect();
-                        this.populateSpeciesSelect();
-                    },
+                        layerTypes: [
+                            {id: 'vectorTilesLayer', label: 'Vector Tiles'}
+                        ],
 
-                    watch: {
-                        'selectedDatasetId': {
-                            handler: function (newVal) {
-                                //this.getAndReplaceOccurrenceData();
-                            },
-                        },
-                        'selectedSpeciesId': {
-                            handler: function (newVal) {
-                                //this.getAndReplaceOccurrenceData();
-                            },
-                        },
-                    },
-                    methods: {
-                        populateSpeciesSelect: function () {
-                            var vm = this;
-                            $.ajax({
-                                url: this.availableSpeciesUrl,
-                            }).done(function (data) {
-                                vm.availableSpecies = data;
-                            })
-                        },
-                        populateDatasetSelect: function () {
-                            var vm = this;
-                            $.ajax({
-                                url: this.availableDatasetsUrl,
-                            }).done(function (data) {
-                                vm.availableDatasets = data;
-                            })
-                        },
-                        clean: function (obj) {
-                            // Remove undefined or null properties from an object
-                            clonedObj = Object.assign({}, obj);
-                            for (var propName in clonedObj) {
-                                if (clonedObj[propName] === null || clonedObj[propName] === undefined) {
-                                    delete clonedObj[propName];
-                                }
-                            }
-                            return clonedObj;
-                        },
-                        /*getAndReplaceOccurrenceData: function () {
-                            let vm = this;
+                        initialZoomLevel: 7,
+                        visibleLayer: 'vectorTilesLayer',
 
-                            this.loading = true;
-                            $.ajax({
-                                url: this.occurrencesCsvUrl,
-                                data: vm.queryFiltersData,
-                                dataType: "text"
-                            }).done(function (data) {
-                                let newOccurrences = [];
-
-                                if (data !== "") {
-                                    data.split('\n').forEach(function (row) {
-                                    var splitted = row.split(',')
-                                    newOccurrences.push({
-                                        id: splitted[0],
-                                        lon: splitted[1],
-                                        lat: splitted[2],
-                                        speciesId: splitted[3],
-                                        datasetId: splitted[4]}
-                                        );
-                                    });
-                                }
-                                vm.occurrences = newOccurrences;
-                                vm.loading = false;
-                            });
-                        }*/
+                        //loadingMessage: '',
+                        //loading: true
                     }
+                },
+                computed: {
+                    /*occurrencesCounter: function () {
+                        return (this.occurrences ? this.occurrences.length : 0);
+                    },*/
 
-                })
+                    queryFiltersData: function () {
+                        var obj = {
+                            datasetId: this.selectedDatasetId,
+                            speciesId: this.selectedSpeciesId,
+                            onlyRecent: this.onlyRecentOccurrences
+                        }
+
+                        return this.clean(obj); // It helps with server side caching if we don't request unnecessary GET params
+                    }
+                },
+                mounted() {
+                    this.populateDatasetSelect();
+                    this.populateSpeciesSelect();
+                },
+
+                watch: {
+                    'selectedDatasetId': {
+                        handler: function (newVal) {
+                            //this.getAndReplaceOccurrenceData();
+                        },
+                    },
+                    'selectedSpeciesId': {
+                        handler: function (newVal) {
+                            //this.getAndReplaceOccurrenceData();
+                        },
+                    },
+                },
+                methods: {
+                    populateSpeciesSelect: function () {
+                        var vm = this;
+                        $.ajax({
+                            url: this.endpoints.availableSpeciesUrl,
+                        }).done(function (data) {
+                            vm.availableSpecies = data;
+                        })
+                    },
+                    populateDatasetSelect: function () {
+                        var vm = this;
+                        $.ajax({
+                            url: this.endpoints.availableDatasetsUrl,
+                        }).done(function (data) {
+                            vm.availableDatasets = data;
+                        })
+                    },
+                    clean: function (obj) {
+                        // Remove undefined or null properties from an object
+                        clonedObj = Object.assign({}, obj);
+                        for (var propName in clonedObj) {
+                            if (clonedObj[propName] === null || clonedObj[propName] === undefined) {
+                                delete clonedObj[propName];
+                            }
+                        }
+                        return clonedObj;
+                    },
+                    /*getAndReplaceOccurrenceData: function () {
+                        let vm = this;
+
+                        this.loading = true;
+                        $.ajax({
+                            url: this.occurrencesCsvUrl,
+                            data: vm.queryFiltersData,
+                            dataType: "text"
+                        }).done(function (data) {
+                            let newOccurrences = [];
+
+                            if (data !== "") {
+                                data.split('\n').forEach(function (row) {
+                                var splitted = row.split(',')
+                                newOccurrences.push({
+                                    id: splitted[0],
+                                    lon: splitted[1],
+                                    lat: splitted[2],
+                                    speciesId: splitted[3],
+                                    datasetId: splitted[4]}
+                                    );
+                                });
+                            }
+                            vm.occurrences = newOccurrences;
+                            vm.loading = false;
+                        });
+                    }*/
+                }
+
+            })
             ;
         };
     </script>

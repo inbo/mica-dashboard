@@ -16,6 +16,40 @@ function dynamicSort(property) {
     }
 }
 
+Vue.component('dashboard-occurrence-counter', {
+    props: {
+        'filters': Object,
+        'counterUrl': String
+    },
+    data: function () {
+        return {
+            'count': 0
+        }
+    },
+    methods: {
+        updateCount: function (filters) {
+            var vm = this;
+            $.ajax({
+                url: this.counterUrl,
+                data: filters
+            }).done(function (data) {
+                vm.count = data.count;
+            })
+        }
+    },
+    watch: {
+        'filters': {
+            deep: true,
+            immediate: true,
+            handler: function(val) {
+                this.updateCount(val);
+            }
+        }
+    },
+
+    template: `<h3>{{ count }} occurrence(s) matching selection</h3>`
+});
+
 // A single page in the occurrence table
 Vue.component('occurrence-table-page', {
     props: {

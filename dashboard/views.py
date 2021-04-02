@@ -50,6 +50,7 @@ def occurrences_csv(request):
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'inline'
 
+    # TODO: mae use of _request_to_occurrences_qs()
     dataset_id = _extract_int_request(request, 'datasetId')
     species_id = _extract_int_request(request, 'speciesId')
     only_recent = _extract_bool_request(request, 'onlyRecent')
@@ -95,6 +96,34 @@ GRID_QUERY_FRAGMENT = """
                     ON ST_Intersects(dashboard_occurrence.location, hexes.geom)
                     GROUP BY hexes.geom
     """
+
+
+def _request_to_occurrences_qs(request):
+    """Takes a request, extract common parameters used to filter occurrences and return a corresponding QuerySet"""
+    qs = Occurrence.objects.all()
+
+    dataset_id = _extract_int_request(request, 'datasetId')
+    species_id = _extract_int_request(request, 'speciesId')
+    only_recent = _extract_bool_request(request, 'onlyRecent')
+
+    if dataset_id:
+        qs = qs.filter(source_dataset_id=dataset_id)
+    if species_id:
+        qs = qs.filter(species_id=species_id)
+    if only_recent:
+        qs = qs.filter(date__range=['2019-01-01', datetime.today().strftime('%Y-%m-%d')])
+
+    return qs
+
+
+def occurrences_counter(request):
+    """Count the occurrences according to the filters received
+
+    filters: same format than other endpoints: getting occurrences, map tiles, ...
+    """
+    qs = _request_to_occurrences_qs(request)
+
+    return JsonResponse({'count': qs.count()})
 
 
 def occ_min_max_in_grid(request):
