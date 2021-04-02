@@ -174,7 +174,7 @@ Vue.component('dashboard-map', {
     },
     computed: {
         colorScale: function () {
-            return d3.scaleSequential(d3.interpolateReds)
+            return d3.scaleSequentialLog(d3.interpolateBlues)
                 .domain([this.HexMinOccCount, this.HexMaxOccCount])
 
         },
