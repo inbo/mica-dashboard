@@ -141,6 +141,7 @@ def occ_min_max_in_grid(request):
 
     data = {
         "hex_size_meters": ZOOM_TO_HEX_SIZE[zoom],
+        "grid_extent_viewport": False,
         "dataset_id": dataset_id,
         "species_id": species_id,
         "start_date": start_date
@@ -161,7 +162,11 @@ def _get_grid_query_fragment():
                     FROM
                         ST_HexagonGrid(
                             {{ hex_size_meters }},
-                            ST_SetSRID(ST_EstimatedExtent('dashboard_occurrence', 'location'), 3857)
+                            {% if grid_extent_viewport %}
+                                TileBBox({{ zoom }}, {{ x }}, {{ y }}, 3857)
+                            {% else %}
+                                ST_SetSRID(ST_EstimatedExtent('dashboard_occurrence', 'location'), 3857)
+                            {% endif %} 
                         ) AS hexes
                     INNER JOIN (
                         SELECT * FROM dashboard_occurrence AS occ 
@@ -208,6 +213,7 @@ def mvt_tiles(request, zoom, x, y):
 
     data = {
         "hex_size_meters": ZOOM_TO_HEX_SIZE[zoom],
+        "grid_extent_viewport": True,
 
         "dataset_id": dataset_id,
         "species_id": species_id,
