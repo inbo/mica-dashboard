@@ -159,7 +159,6 @@ Vue.component('dashboard-map', {
     },
     data: function () {
         return {
-            //clusterStyleCache: {},
             map: null,
             vectorSource: new ol.source.Vector(),
             HexMinOccCount: 1,
@@ -167,6 +166,16 @@ Vue.component('dashboard-map', {
         }
     },
     watch: {
+        HexMinOccCount: {
+            handler: function (val) {
+                this.replaceVectorTilesLayer();
+            },
+        },
+        HexMaxOccCount: {
+            handler: function (val) {
+                this.replaceVectorTilesLayer();
+            },
+        },
         visibleLayer: {
             handler: function (val) {
                 this.setLayerVisibility(val);
@@ -175,9 +184,7 @@ Vue.component('dashboard-map', {
         filters: {
             deep: true,
             handler: function (val) {
-                this.removeVectorTilesLayer();
-                var l = this.createVectorTilesLayer();
-                this.map.addLayer(l);
+                this.replaceVectorTilesLayer();
             },
         }
 
@@ -203,6 +210,12 @@ Vue.component('dashboard-map', {
         },
     },
     methods: {
+        replaceVectorTilesLayer: function() {
+            if (this.vectorTilesLayer) {
+                this.removeVectorTilesLayer();
+            }
+            this.map.addLayer(this.createVectorTilesLayer());
+        },
         setLayerVisibility: function (layerName) {
             this.dataLayers.forEach(function (l) {
                 if (l.get('name') === layerName) {
@@ -254,15 +267,14 @@ Vue.component('dashboard-map', {
             })
 
         },
-        createMap: function () {
+        createBaseMap: function () {
             var baseLayer = new ol.layer.Tile({
                 source: new ol.source.OSM({url: "http://a.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"})
             })
 
             return new ol.Map({
                 layers: [
-                    baseLayer,
-                    this.createVectorTilesLayer()
+                    baseLayer
                 ],
                 view: new ol.View({
                     center: ol.proj.fromLonLat([this.initialLon, this.initialLat]),
@@ -273,7 +285,7 @@ Vue.component('dashboard-map', {
     },
     mounted() {
         this.loadOccMinMax(this.initialZoom);
-        this.map = this.createMap();
+        this.map = this.createBaseMap();
         this.map.setTarget(this.$refs['map-root']); // Assign the map to div and display
         this.setLayerVisibility(this.visibleLayer);
     },
