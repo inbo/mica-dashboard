@@ -10,6 +10,7 @@ from jinjasql import JinjaSql
 
 from .models import Occurrence, Dataset, Species
 
+RECENT_OCCURRENCES_START = '2019-01-01'
 
 def index(request):
     return render(request, "dashboard/index.html")
@@ -61,7 +62,7 @@ def occurrences_csv(request):
     if species_id:
         objects = objects.filter(species__pk=species_id)
     if only_recent:
-        objects = objects.filter(date__range=['2019-01-01', datetime.today().strftime('%Y-%m-%d')])
+        objects = objects.filter(date__range=[RECENT_OCCURRENCES_START, datetime.today().strftime('%Y-%m-%d')])
 
     writer = csv.writer(response)
     for o in objects:
@@ -85,20 +86,26 @@ ZOOM_TO_HEX_SIZE = {
 }
 
 
+def _filters_from_request(request):
+    dataset_id = _extract_int_request(request, 'datasetId')
+    species_id = _extract_int_request(request, 'speciesId')
+    only_recent = _extract_bool_request(request, 'onlyRecent')
+
+    return dataset_id, species_id, only_recent
+
+
 def _request_to_occurrences_qs(request):
     """Takes a request, extract common parameters used to filter occurrences and return a corresponding QuerySet"""
     qs = Occurrence.objects.all()
 
-    dataset_id = _extract_int_request(request, 'datasetId')
-    species_id = _extract_int_request(request, 'speciesId')
-    only_recent = _extract_bool_request(request, 'onlyRecent')
+    dataset_id, species_id, only_recent = _filters_from_request(request)
 
     if dataset_id:
         qs = qs.filter(source_dataset_id=dataset_id)
     if species_id:
         qs = qs.filter(species_id=species_id)
     if only_recent:
-        qs = qs.filter(date__range=['2020-07-01', datetime.today().strftime('%Y-%m-%d')])
+        qs = qs.filter(date__range=[RECENT_OCCURRENCES_START, datetime.today().strftime('%Y-%m-%d')])
 
     return qs
 
@@ -116,23 +123,27 @@ def occurrences_counter(request):
 def occ_min_max_in_grid(request):
     """ Returns the min, max occurrences count per hexagon, according to the zoom level"""
     zoom = _extract_int_request(request, 'zoom')
-
-    qs = _request_to_occurrences_qs(request)
-    matching_occurrences_ids = list(qs.values_list('id', flat=True))
+    dataset_id, species_id, only_recent = _filters_from_request(request)
 
     template = f"""
     WITH grid AS (
                 {_get_grid_query_fragment()}
             )
-            
-            SELECT MIN(count), MAX(count) FROM grid;   
+
+            SELECT MIN(count), MAX(count) FROM grid;
     """
 
     template = ' '.join(template.replace('\n', '').split())  # Remove multiple withespaces and \n for easier inspection
 
+    start_date = None
+    if only_recent:
+        start_date = RECENT_OCCURRENCES_START
+
     data = {
         "hex_size_meters": ZOOM_TO_HEX_SIZE[zoom],
-        "occurrences_id": matching_occurrences_ids
+        "dataset_id": dataset_id,
+        "species_id": species_id,
+        "start_date": start_date
     }
 
     cursor = connection.cursor()
@@ -152,8 +163,22 @@ def _get_grid_query_fragment():
                             {{ hex_size_meters }},
                             ST_SetSRID(ST_EstimatedExtent('dashboard_occurrence', 'location'), 3857)
                         ) AS hexes
-                    INNER JOIN (SELECT * FROM dashboard_occurrence AS occ WHERE occ.id IN {{ occurrences_id | inclause }}) AS dashboard_filtered_occ
-                    
+                    INNER JOIN (
+                        SELECT * FROM dashboard_occurrence AS occ 
+                        WHERE (
+                            1 = 1
+                            {% if dataset_id %}
+                                AND occ.source_dataset_id = {{ dataset_id }}
+                            {% endif %}
+                            {% if species_id %}
+                                AND occ.species_id = {{ species_id }}
+                            {% endif %}
+                            {% if start_date %}
+                                AND occ.date >= TO_DATE({{ start_date }}, 'YYYY-MM-DD')
+                            {% endif %}
+                            ))
+                            
+                    AS dashboard_filtered_occ
                     
                     ON ST_Intersects(dashboard_filtered_occ.location, hexes.geom)
                     GROUP BY hexes.geom
@@ -161,39 +186,46 @@ def _get_grid_query_fragment():
 
 
 def mvt_tiles(request, zoom, x, y):
-    qs = _request_to_occurrences_qs(request)
-    matching_occurrences_ids = list(qs.values_list('id', flat=True))
+    dataset_id, species_id, only_recent = _filters_from_request(request)
 
-    if len(matching_occurrences_ids) == 0:
-        return HttpResponse('', content_type='application/vnd.mapbox-vector-tile')
-    else:
-        template = f"""
-                WITH grid AS (
-                    {_get_grid_query_fragment()}
-                )   
-    
-                ,mvtgeom AS (
-                    SELECT ST_AsMVTGeom(geom, TileBBox({{{{{ zoom }}}}}, {{{{{ x }}}}}, {{{{{ y }}}}}, 3857)) AS geom, count FROM grid
-                )
-    
-                SELECT st_asmvt(mvtgeom.*) FROM mvtgeom;
-                """
+    template = f"""
+            WITH grid AS (
+                {_get_grid_query_fragment()}
+            )   
 
-        template = ' '.join(template.replace('\n', '').split())  # Remove multiple withespaces and \n for easier inspection
+            ,mvtgeom AS (
+                SELECT ST_AsMVTGeom(geom, TileBBox({{{{{ zoom }}}}}, {{{{{ x }}}}}, {{{{{ y }}}}}, 3857)) AS geom, count FROM grid
+            )
 
-        data = {
-            "hex_size_meters": ZOOM_TO_HEX_SIZE[zoom],
-            "occurrences_id": matching_occurrences_ids,
-            "zoom": zoom,
-            "x": x,
-            "y": y
-        }
+            SELECT st_asmvt(mvtgeom.*) FROM mvtgeom;
+            """
 
-        cursor = connection.cursor()
-        j = JinjaSql()
+    template = ' '.join(template.replace('\n', '').split())  # Remove multiple withespaces and \n for easier inspection
 
-        query, bind_params = j.prepare_query(template, data)
-        cursor.execute(query, bind_params)
+    start_date = None
+    if only_recent:
+        start_date = RECENT_OCCURRENCES_START
 
+    data = {
+        "hex_size_meters": ZOOM_TO_HEX_SIZE[zoom],
+
+        "dataset_id": dataset_id,
+        "species_id": species_id,
+        "start_date": start_date,
+
+        "zoom": zoom,
+        "x": x,
+        "y": y
+    }
+
+    cursor = connection.cursor()
+    j = JinjaSql()
+
+    query, bind_params = j.prepare_query(template, data)
+    cursor.execute(query, bind_params)
+
+    if cursor.rowcount != 0:
         row = cursor.fetchone()
         return HttpResponse(row[0].tobytes(), content_type='application/vnd.mapbox-vector-tile')
+    else:
+        return HttpResponse('', content_type='application/vnd.mapbox-vector-tile')
