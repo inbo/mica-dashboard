@@ -136,7 +136,9 @@ CACHES = {
 DATASET_CONFIG = (
     {'gbif_id': 'b7ee2a4d-8e10-410f-a951-a7f032678ffe', 'name': 'Muskrat captures in Flanders, Belgium', 'catches': True },
     {'gbif_id': '95b0e787-8508-4247-9e48-18b45fc7d12e', 'name': 'MICA - Muskrat occurrences collected by RATO in East Flanders, Belgium', 'catches': True},
-    {'gbif_id': '45f54678-54ac-4468-8aac-bc83722fc768', 'name': 'MICA - Muskrat and Coypu occurrences collected by UVW in the Netherlands', 'catches': True}
+    {'gbif_id': '45f54678-54ac-4468-8aac-bc83722fc768', 'name': 'MICA - Muskrat and Coypu occurrences collected by UVW in the Netherlands', 'catches': True},
+    {'gbif_id': '3634aee3-41d5-4aa2-8cb5-875859f62a3a', 'name': 'MICA - Muskrat occurrences collected by VMM in Flanders, Belgium', 'catches': True},
+    {'gbif_id': '8a5cbaec-2839-4471-9e1d-98df301095dd', 'name': 'MICA - Muskrat and coypu camera trap observations in Belgium, the Netherlands and Germany', 'catches': True}
 )
 
 # A (writable by Django) directory where GBIF datasets are temporarily stored before their ingestion
