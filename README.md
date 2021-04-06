@@ -13,7 +13,10 @@ Run management command:
     $ docker-compose run web python manage.py <DJANGO_COMMAND>
 
 # TODO:
-- Reimplement data table, with paginated load
+- Import command: add command/flag to import everything
+- Occurrence table: add link to GBIF (dataset, occurrence)
+- Occurrence table: show specific occurrence on Map
+- Update to Django 3.2  
 - Hexagons density map: swithc to individual occurrences at high zoom level
 - Find a way to implement a heatmap(smaller squares + good color scale + blur?)
 - Map: reimplement other modes (WebGL heatmap, individual points, client clusters, ...) when the number of occurrences is reasonable?

@@ -138,7 +138,9 @@ DATASET_CONFIG = (
     {'gbif_id': '95b0e787-8508-4247-9e48-18b45fc7d12e', 'name': 'MICA - Muskrat occurrences collected by RATO in East Flanders, Belgium', 'catches': True},
     {'gbif_id': '45f54678-54ac-4468-8aac-bc83722fc768', 'name': 'MICA - Muskrat and Coypu occurrences collected by UVW in the Netherlands', 'catches': True},
     {'gbif_id': '3634aee3-41d5-4aa2-8cb5-875859f62a3a', 'name': 'MICA - Muskrat occurrences collected by VMM in Flanders, Belgium', 'catches': True},
-    {'gbif_id': '8a5cbaec-2839-4471-9e1d-98df301095dd', 'name': 'MICA - Muskrat and coypu camera trap observations in Belgium, the Netherlands and Germany', 'catches': True}
+    {'gbif_id': '8a5cbaec-2839-4471-9e1d-98df301095dd', 'name': 'MICA - Muskrat and coypu camera trap observations in Belgium, the Netherlands and Germany', 'catches': False},
+    {'gbif_id': '9a0b66df-7535-4f28-9f4e-5bc11b8b096c', 'name': 'Waarnemingen.be - Non-native animal occurrences in Flanders and the Brussels Capital Region, Belgium', 'catches': False},
+    {'gbif_id': '629befd5-fb45-4365-95c4-d07e72479b37', 'name': 'Observations.be - Non-native species occurrences in Wallonia, Belgium', 'catches': False},
 )
 
 # A (writable by Django) directory where GBIF datasets are temporarily stored before their ingestion

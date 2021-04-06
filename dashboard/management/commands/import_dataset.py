@@ -13,8 +13,9 @@ from dashboard.models import Dataset, Occurrence, Species
 
 # Number of decimal places kept in the coordinates (3 = 111m accuracy at the equator => better in Belgium). This is done
 # for permormance reasons (GeoJSON file size).
-COORDINATES_DECIMAL_PLACES = 3
+COORDINATES_DECIMAL_PLACES = 4
 
+GBIF_TAXA_IDS_TO_IMPORT = [5219858, 4264680]  # We only import those species
 
 def truncate(number, digits) -> float:
     stepper = 10.0 ** digits
@@ -51,45 +52,46 @@ class Command(BaseCommand):
             dataset = Dataset.objects.create(gbif_id=gbif_dataset_id, name=dataset_name, contains_catches=catches)
 
             for row in dwca:
-                species, _ = Species.objects.get_or_create(name=row.data[qn('scientificName')])
+                if int(row.data['http://rs.gbif.org/terms/1.0/acceptedTaxonKey']) in GBIF_TAXA_IDS_TO_IMPORT:
+                    species, _ = Species.objects.get_or_create(name=row.data[qn('scientificName')])
 
-                # Some catches have no location...
-                try:
-                    point = Point(truncate(float(row.data[qn('decimalLongitude')]), COORDINATES_DECIMAL_PLACES),
-                                  truncate(float(row.data[qn('decimalLatitude')]), COORDINATES_DECIMAL_PLACES),
-                                  srid=4326)
-                except ValueError:
-                    point = None
+                    # Some catches have no location...
+                    try:
+                        point = Point(truncate(float(row.data[qn('decimalLongitude')]), COORDINATES_DECIMAL_PLACES),
+                                      truncate(float(row.data[qn('decimalLatitude')]), COORDINATES_DECIMAL_PLACES),
+                                      srid=4326)
+                    except ValueError:
+                        point = None
 
-                # Some dates are incomplete(year only - skipping for now)
-                year = int(row.data[qn('year')])
-                try:
-                    month = int(row.data[qn('month')])
-                    day = int(row.data[qn('day')])
-                except ValueError:
-                    month = 1
-                    day = 1
-                date = datetime.date(year, month, day)
+                    # Some dates are incomplete(year only - skipping for now)
+                    year = int(row.data[qn('year')])
+                    try:
+                        month = int(row.data[qn('month')])
+                        day = int(row.data[qn('day')])
+                    except ValueError:
+                        month = 1
+                        day = 1
+                    date = datetime.date(year, month, day)
 
-                # individualCount is not always present - default to 1
-                try:
-                    ic = int(row.data[qn('individualCount')])
-                except ValueError:
-                    ic = 1
+                    # individualCount is not always present - default to 1
+                    try:
+                        ic = int(row.data[qn('individualCount')])
+                    except ValueError:
+                        ic = 1
 
-                Occurrence.objects.create(
-                    gbif_id=int(row.data['http://rs.gbif.org/terms/1.0/gbifID']),
-                    species=species,
-                    source_dataset=dataset,
-                    individual_count=ic,
-                    date=date,
-                    location=point,
-                    coordinates_uncertainty=float(row.data[qn('coordinateUncertaintyInMeters')]),
-                    municipality=row.data[qn('municipality')],
-                    georeference_remarks=row.data[qn('georeferenceRemarks')]
-                )
+                    Occurrence.objects.create(
+                        gbif_id=int(row.data['http://rs.gbif.org/terms/1.0/gbifID']),
+                        species=species,
+                        source_dataset=dataset,
+                        individual_count=ic,
+                        date=date,
+                        location=point,
+                        coordinates_uncertainty=float(row.data[qn('coordinateUncertaintyInMeters')]),
+                        municipality=row.data[qn('municipality')],
+                        georeference_remarks=row.data[qn('georeferenceRemarks')]
+                    )
 
-                self.stdout.write(".", ending='')
+                    self.stdout.write(".", ending='')
 
     def add_arguments(self, parser):
         parser.add_argument('gbif_dataset_id')
