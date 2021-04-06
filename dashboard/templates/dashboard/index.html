@@ -6,16 +6,6 @@
     <link rel="stylesheet"
           href="https://openlayers.org/en/main/css/ol.css"
           type="text/css">
-    <style>
-        .fade-enter-active, .fade-leave-active {
-            transition: opacity 1s;
-        }
-
-        .fade-enter, .fade-leave-to /* .fade-leave-active below version 2.1.8 */
-        {
-            opacity: 0;
-        }
-    </style>
 {% endblock %}
 
 {% block content-fixed %}
@@ -90,8 +80,7 @@
                 ></dashboard-map>
 
                 <h2>Table view</h2>
-                <dashboard-table :occurrences="[]"></dashboard-table>
-
+                <dashboard-table :filters="selectedFilters" :occurrences-json-url="endpoints.occurrencesJsonUrl"></dashboard-table>
             </div>
         </div>
     </div>
@@ -104,9 +93,6 @@
                 delimiters: ['[[', ']]'],
                 data() {
                     return {
-                        //occurrencesCsvUrl: "{% url 'dashboard-api-occurrences_csv' %}",
-                        //occurrences: [], // Array of objects: [{id: 1234, lon: 5.32, lat:50.12}, ...],
-
                         selectedFilters: {
                             datasetId: null,
                             speciesId: null,
@@ -117,36 +103,19 @@
                             availableDatasetsUrl: "{% url 'dashboard-api-available-datasets' %}",
                             availableSpeciesUrl: "{% url 'dashboard-api-available-species' %}",
                             minMaxOccCountUrl: "{% url 'dashboard-api-min-max-in-grid' %}",
-                            counterUrl: "{% url 'dashboard-api-occurrences-counter' %}"
+                            counterUrl: "{% url 'dashboard-api-occurrences-counter' %}",
+                            occurrencesJsonUrl: "{% url 'dashboard-api-occurrences-json' %}"
                         },
 
                         availableDatasets: [],
                         availableSpecies: [],
 
                         layerTypes: [
-                            {id: 'vectorTilesLayer', label: 'Vector Tiles'}
+                            {id: 'vectorTilesLayer', label: 'Hexagons (density)'}
                         ],
 
                         initialZoomLevel: 7,
                         visibleLayer: 'vectorTilesLayer',
-
-                        //loadingMessage: '',
-                        //loading: true
-                    }
-                },
-                computed: {
-                    /*occurrencesCounter: function () {
-                        return (this.occurrences ? this.occurrences.length : 0);
-                    },*/
-
-                    queryFiltersData: function () {
-                        var obj = {
-                            datasetId: this.selectedDatasetId,
-                            speciesId: this.selectedSpeciesId,
-                            onlyRecent: this.onlyRecentOccurrences
-                        }
-
-                        return this.clean(obj); // It helps with server side caching if we don't request unnecessary GET params
                     }
                 },
                 mounted() {
@@ -193,33 +162,6 @@
                         }
                         return clonedObj;
                     },
-                    /*getAndReplaceOccurrenceData: function () {
-                        let vm = this;
-
-                        this.loading = true;
-                        $.ajax({
-                            url: this.occurrencesCsvUrl,
-                            data: vm.queryFiltersData,
-                            dataType: "text"
-                        }).done(function (data) {
-                            let newOccurrences = [];
-
-                            if (data !== "") {
-                                data.split('\n').forEach(function (row) {
-                                var splitted = row.split(',')
-                                newOccurrences.push({
-                                    id: splitted[0],
-                                    lon: splitted[1],
-                                    lat: splitted[2],
-                                    speciesId: splitted[3],
-                                    datasetId: splitted[4]}
-                                    );
-                                });
-                            }
-                            vm.occurrences = newOccurrences;
-                            vm.loading = false;
-                        });
-                    }*/
                 }
 
             })

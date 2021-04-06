@@ -1,9 +1,8 @@
-import csv
 from datetime import datetime
 
+from django.core.paginator import Paginator
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
-from django.views.decorators.cache import cache_page
 from django.db import connection
 
 from jinjasql import JinjaSql
@@ -11,6 +10,7 @@ from jinjasql import JinjaSql
 from .models import Occurrence, Dataset, Species
 
 RECENT_OCCURRENCES_START = '2019-01-01'
+
 
 def index(request):
     return render(request, "dashboard/index.html")
@@ -45,31 +45,22 @@ def _extract_bool_request(request, param_name):
         return False
 
 
-@cache_page(60 * 120)
-def occurrences_csv(request):
-    # Create the HttpResponse object with the appropriate CSV header.
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'inline'
+def occurrences_json(request):
+    order = request.GET.get('order')
+    limit = _extract_int_request(request, 'limit')
+    page_number = _extract_int_request(request, 'page_number')
 
-    # TODO: mae use of _request_to_occurrences_qs()
-    dataset_id = _extract_int_request(request, 'datasetId')
-    species_id = _extract_int_request(request, 'speciesId')
-    only_recent = _extract_bool_request(request, 'onlyRecent')
+    occurrences = _request_to_occurrences_qs(request).order_by(order)
 
-    objects = Occurrence.objects.all()
-    if dataset_id:
-        objects = objects.filter(source_dataset__pk=dataset_id)
-    if species_id:
-        objects = objects.filter(species__pk=species_id)
-    if only_recent:
-        objects = objects.filter(date__range=[RECENT_OCCURRENCES_START, datetime.today().strftime('%Y-%m-%d')])
+    paginator = Paginator(occurrences, limit)  # Show 25 contacts per page.
 
-    writer = csv.writer(response)
-    for o in objects:
-        if o.location:
-            writer.writerow([o.pk, o.location.x, o.location.y, o.species_id, o.source_dataset_id])
+    page = paginator.get_page(page_number)
+    occurrences_dicts = [occ.as_dict() for occ in page.object_list]
 
-    return response
+    return JsonResponse({'results': occurrences_dicts,
+                         'firstPage': page.paginator.page_range.start,
+                         'lastPage': page.paginator.page_range.stop,
+                         'totalResultsCount': page.paginator.count})
 
 
 ZOOM_TO_HEX_SIZE = {

@@ -31,5 +31,13 @@ class Occurrence(models.Model):
     coordinates_uncertainty = models.FloatField(blank=True, null=True) # in meters
     georeference_remarks = models.TextField(blank=True)
 
+    def as_dict(self):
+        lon, lat = self.location.transform(4326, clone=True).coords
 
-
+        return {
+            'id': self.pk,
+            'lat': str(lat)[:6],
+            'lon': str(lon)[:6],
+            'speciesName': self.species.name,
+            'datasetName': self.source_dataset.name
+        }

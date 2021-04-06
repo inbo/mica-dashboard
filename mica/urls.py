@@ -21,7 +21,7 @@ from dashboard import views
 urlpatterns = [
     path('', views.index, name="dashboard-index"),
 
-    path('api/occurrences_csv/', views.occurrences_csv, name="dashboard-api-occurrences_csv"),
+    path('api/occurrences_json/', views.occurrences_json, name='dashboard-api-occurrences-json'),
     path('api/available_datasets/', views.available_datasets, name="dashboard-api-available-datasets"),
     path('api/available_species/', views.available_species, name="dashboard-api-available-species"),
     path('api/occurrences_count/', views.occurrences_counter, name="dashboard-api-occurrences-counter"),

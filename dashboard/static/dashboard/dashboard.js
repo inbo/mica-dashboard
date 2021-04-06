@@ -1,21 +1,3 @@
-// Helpers
-
-// See: https://stackoverflow.com/questions/1129216/sort-array-of-objects-by-string-property-value
-function dynamicSort(property) {
-    var sortOrder = 1;
-    if (property[0] === "-") {
-        sortOrder = -1;
-        property = property.substr(1);
-    }
-    return function (a, b) {
-        /* next line works with strings and numbers,
-         * and you may want to customize it to your needs
-         */
-        var result = (a[property] < b[property]) ? -1 : (a[property] > b[property]) ? 1 : 0;
-        return result * sortOrder;
-    }
-}
-
 Vue.component('dashboard-occurrence-counter', {
     props: {
         'filters': Object,
@@ -41,7 +23,7 @@ Vue.component('dashboard-occurrence-counter', {
         'filters': {
             deep: true,
             immediate: true,
-            handler: function(val) {
+            handler: function (val) {
                 this.updateCount(val);
             }
         }
@@ -65,8 +47,8 @@ Vue.component('occurrence-table-page', {
                     <th scope="row">{{ occ.id }}</th>
                     <td>{{ occ.lat }}</td>
                     <td>{{ occ.lon }}</td>
-                    <td>{{ occ.speciesId }}</td>
-                    <td>{{ occ.datasetId }}</td>
+                    <td>{{ occ.speciesName }}</td>
+                    <td>{{ occ.datasetName }}</td>
                  </tr>
                </tbody>`
 });
@@ -75,70 +57,93 @@ Vue.component('occurrence-table-page', {
 // TODO: make it load data according to pagination
 Vue.component('dashboard-table', {
     props: {
-        'occurrences': { // All occurrences, coming from the main component
-            type: Array,
-            default: function () {
-                return []
+        'filters': Object,
+        'occurrencesJsonUrl': String
+    },
+    watch: {
+        filters: {
+            deep: true,
+            immediate: true,
+            handler: function () {
+                this.currentPage = 1;
+                this.loadOccurrences(this.filters, this.sortBy, this.pageSize, this.currentPage);
+            },
+        },
+        currentPage: function () {
+            this.loadOccurrences(this.filters, this.sortBy, this.pageSize, this.currentPage);
+        },
+        sortBy: function () {
+            this.loadOccurrences(this.filters, this.sortBy, this.pageSize, this.currentPage);
+        },
+    },
+    methods: {
+        changeSort: function(newSort) {
+            if (newSort != null) {
+                this.sortBy = newSort;
             }
+        },
+        loadOccurrences: function (filters, orderBy, pageSize, pageNumber) {
+            var params = filters;
+            params.order = orderBy;
+            params.limit = pageSize;
+            params.page_number = pageNumber;
+
+
+            var vm = this;
+
+            $.ajax({
+                url: this.occurrencesJsonUrl,
+                data: params,
+            }).done(function (data) {
+                vm.occurrences = data.results;
+                vm.firstPage = data.firstPage;
+                vm.lastPage = data.lastPage - 1;
+                vm.totalOccurrencesCount = data.totalResultsCount;
+            })
         }
     },
     data: function () {
         return {
             currentPage: 1,
-            pageSize: 15,
-
-            sortBy: 'id', // Entry for 'id' in the 'cols' objects
+            firstPage: null,
+            lastPage: null,
+            pageSize: 20,
+            totalOccurrencesCount: null,
+            sortBy: 'id',
+            occurrences: [],
 
             cols: [
-                // id: used internally by Vue code, label: displayed in header, dataAttribute: attribute of the occurrence object
-                {'id': 'id', 'label': '#', 'dataAttribute': 'id'},
-                {'id': 'lat', 'label': 'Lat', 'dataAttribute': 'lat'},
-                {'id': 'lon', 'label': 'Lon', 'dataAttribute': 'lon'},
-                {'id': 'speciesId', 'label': 'Species ID', 'dataAttribute': 'speciesId'},
-                {'id': 'datasetId', 'label': 'Dataset ID', 'dataAttribute': 'datasetId'}
+                // sortId: must match django QS filter (null = non-sortable), label: displayed in header
+                {'sortId': 'id', 'label': '#', },
+                {'sortId': null, 'label': 'Lat', },
+                {'sortId': null, 'label': 'Lon', },
+                {'sortId': 'species__name', 'label': 'Species', },
+                {'sortId': 'source_dataset__name', 'label': 'Dataset', }
             ]
         }
     },
     computed: {
-        sortByDataAttribute: function () {
-            return this.cols.find(col => col.id === this.sortBy).dataAttribute;
-        },
-        sortedOccurrences: function () {
-            return this.occurrences.sort(dynamicSort(this.sortByDataAttribute));
-        },
         hasPreviousPage: function () {
             return (this.currentPage > 1);
         },
         hasNextPage: function () {
-            return (this.currentPage < this.numberOfPages);
+            return (this.currentPage < this.lastPage);
         },
-        numberOfOccurrences: function () {
-            return this.occurrences.length;
-        },
-        numberOfPages: function () {
-            return Math.ceil(this.numberOfOccurrences / this.pageSize);
-        },
-        occurrencesCurrentPage: function () {
-            let startIndex = (this.currentPage - 1) * this.pageSize;
-            let endIndex = Math.min(startIndex + this.pageSize - 1, this.numberOfOccurrences - 1);
-
-            return this.sortedOccurrences.slice(startIndex, endIndex + 1);
-        }
     },
     template: `<div id="table-outer">
-                    <table v-if="numberOfOccurrences > 0" class="table table-striped table-sm">
+                    <table class="table table-striped table-sm">
                         <thead class="thead-dark">
                             <tr>
-                                <th :class="{ 'text-primary': (sortBy == col.id) } " v-for="col in cols" scope="col">
-                                    <span @click="sortBy = col.id">{{ col.label }}</span>
+                                <th :class="{ 'text-primary': (sortBy == col.sortId) }" v-for="col in cols" scope="col">
+                                    <span @click="changeSort(col.sortId)">{{ col.label }}</span>
                                 </th>
                             </tr>
                         </thead>                 
-                        <occurrence-table-page :occurrences="occurrencesCurrentPage"></occurrence-table-page>
+                        <occurrence-table-page :occurrences="occurrences"></occurrence-table-page>
                     </table>
-                    <p v-if="numberOfOccurrences > 0" class="text-center"> 
+                    <p class="text-center"> 
                         <button type="button" :disabled="!hasPreviousPage" class="btn btn-outline-primary btn-sm" @click="currentPage -= 1">Previous</button>
-                        Page {{ currentPage }} / {{ numberOfPages }}
+                        Page {{ currentPage }} / {{ lastPage }}
                         <button type="button" :disabled="!hasNextPage" class="btn btn-outline-primary btn-sm" @click="currentPage += 1">Next</button>
                     </p>
                </div>`
@@ -210,7 +215,7 @@ Vue.component('dashboard-map', {
         },
     },
     methods: {
-        replaceVectorTilesLayer: function() {
+        replaceVectorTilesLayer: function () {
             if (this.vectorTilesLayer) {
                 this.removeVectorTilesLayer();
             }
@@ -225,7 +230,7 @@ Vue.component('dashboard-map', {
                 }
             })
         },
-        removeVectorTilesLayer: function() {
+        removeVectorTilesLayer: function () {
             this.map.removeLayer(this.vectorTilesLayer);
         },
         createVectorTilesLayer: function () {
