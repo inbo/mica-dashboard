@@ -133,6 +133,8 @@ CACHES = {
     }
 }
 
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+
 DATASET_CONFIG = (
     {'gbif_id': 'b7ee2a4d-8e10-410f-a951-a7f032678ffe', 'name': 'Muskrat captures in Flanders, Belgium', 'catches': True },
     {'gbif_id': '95b0e787-8508-4247-9e48-18b45fc7d12e', 'name': 'MICA - Muskrat occurrences collected by RATO in East Flanders, Belgium', 'catches': True},
