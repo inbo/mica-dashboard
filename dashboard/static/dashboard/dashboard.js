@@ -189,6 +189,7 @@ Vue.component('dashboard-map', {
         filters: {
             deep: true,
             handler: function (val) {
+                this.loadOccMinMax(this.initialZoom, this.filters);
                 this.replaceVectorTilesLayer();
             },
         }
@@ -260,11 +261,15 @@ Vue.component('dashboard-map', {
             l.set('dataLayer', true);
             return l;
         },
-        loadOccMinMax: function (zoomLevel) {
-            var vm = this;
+        loadOccMinMax: function (zoomLevel, filters) {
+            var vm = this
+
+            var params = filters;
+            params.zoom = zoomLevel;
+
             $.ajax({
                 url: this.minMaxUrl,
-                data: {zoom: zoomLevel}
+                data: params
             }).done(function (data) {
                 //console.log(data)
                 vm.HexMinOccCount = data.min;
@@ -289,7 +294,7 @@ Vue.component('dashboard-map', {
         }
     },
     mounted() {
-        this.loadOccMinMax(this.initialZoom);
+        this.loadOccMinMax(this.initialZoom, this.filters);
         this.map = this.createBaseMap();
         this.map.setTarget(this.$refs['map-root']); // Assign the map to div and display
         this.setLayerVisibility(this.visibleLayer);
