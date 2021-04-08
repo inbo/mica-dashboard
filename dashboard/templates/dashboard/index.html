@@ -69,18 +69,21 @@
 
             <div class="col-9">
 
-                <dashboard-occurrence-counter :filters="selectedFilters" :counter-url="endpoints.counterUrl"></dashboard-occurrence-counter>
+                <dashboard-occurrence-counter :filters="selectedFilters"
+                                              :counter-url="endpoints.counterUrl"></dashboard-occurrence-counter>
 
                 <h2>Map view</h2>
                 <dashboard-map
                         :initial-lat="51.58" :initial-lon="4.67" :initial-zoom="initialZoomLevel"
                         :visible-layer="visibleLayer"
                         :min-max-url="endpoints.minMaxOccCountUrl"
+                        :tile-server-url-template="endpoints.tileServerUrlTemplate"
                         :filters="selectedFilters"
                 ></dashboard-map>
 
                 <h2>Table view</h2>
-                <dashboard-table :filters="selectedFilters" :occurrences-json-url="endpoints.occurrencesJsonUrl"></dashboard-table>
+                <dashboard-table :filters="selectedFilters"
+                                 :occurrences-json-url="endpoints.occurrencesJsonUrl"></dashboard-table>
             </div>
         </div>
     </div>
@@ -104,7 +107,8 @@
                             availableSpeciesUrl: "{% url 'dashboard-api-available-species' %}",
                             minMaxOccCountUrl: "{% url 'dashboard-api-min-max-in-grid' %}",
                             counterUrl: "{% url 'dashboard-api-occurrences-counter' %}",
-                            occurrencesJsonUrl: "{% url 'dashboard-api-occurrences-json' %}"
+                            occurrencesJsonUrl: "{% url 'dashboard-api-occurrences-json' %}",
+                            tileServerUrlTemplate: "{% url 'dashboard-api-mvt-tiles' zoom=1 x=2 y=3%}".replace('1', '{z}').replace('2', '{x}').replace('3', '{y}')
                         },
 
                         availableDatasets: [],

@@ -153,6 +153,7 @@ Vue.component('dashboard-table', {
 Vue.component('dashboard-map', {
     props: {
         'minMaxUrl': String,
+        'tileServerUrlTemplate': String,
 
         'initialLat': Number,
         'initialLon': Number,
@@ -239,8 +240,7 @@ Vue.component('dashboard-map', {
             var l = new ol.layer.VectorTile({
                 source: new ol.source.VectorTile({
                     format: new ol.format.MVT(),
-                    url: 'http://0.0.0.0:8000/api/tiles/{z}/{x}/{y}.mvt' + '?' + $.param(vm.filters),
-                    //projection: 'EPSG:4326',
+                    url: vm.tileServerUrlTemplate + '?' + $.param(vm.filters),
                 }),
                 style: function (feature) {
                     //console.log("Feature:", feature)
