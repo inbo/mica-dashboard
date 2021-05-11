@@ -64,6 +64,12 @@
                             <option v-for="layer in layerTypes" :value="layer.id">[[ layer.label ]]</option>
                         </select>
                     </div>
+
+                    <div class="form-group">
+                        <input type="checkbox" id="showHexaonCounters"
+                               v-model="showHexagonCounters">
+                        <label class="col-form-label col-form-label-sm" for="showHexaonCounters">Show hexagon counters</label>
+                    </div>
                 </form>
             </div>
 
@@ -79,6 +85,7 @@
                         :min-max-url="endpoints.minMaxOccCountUrl"
                         :tile-server-url-template="endpoints.tileServerUrlTemplate"
                         :filters="selectedFilters"
+                        :show-counters="showHexagonCounters"
                 ></dashboard-map>
 
                 <h2>Table view</h2>
@@ -118,6 +125,7 @@
                             {id: 'vectorTilesLayer', label: 'Hexagons (density)'}
                         ],
 
+                        showHexagonCounters: true,
                         initialZoomLevel: 7,
                         visibleLayer: 'vectorTilesLayer',
                     }

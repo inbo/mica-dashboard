@@ -77,7 +77,7 @@ Vue.component('dashboard-table', {
         },
     },
     methods: {
-        changeSort: function(newSort) {
+        changeSort: function (newSort) {
             if (newSort != null) {
                 this.sortBy = newSort;
             }
@@ -114,11 +114,11 @@ Vue.component('dashboard-table', {
 
             cols: [
                 // sortId: must match django QS filter (null = non-sortable), label: displayed in header
-                {'sortId': 'id', 'label': '#', },
-                {'sortId': null, 'label': 'Lat', },
-                {'sortId': null, 'label': 'Lon', },
-                {'sortId': 'species__name', 'label': 'Species', },
-                {'sortId': 'source_dataset__name', 'label': 'Dataset', }
+                {'sortId': 'id', 'label': '#',},
+                {'sortId': null, 'label': 'Lat',},
+                {'sortId': null, 'label': 'Lon',},
+                {'sortId': 'species__name', 'label': 'Species',},
+                {'sortId': 'source_dataset__name', 'label': 'Dataset',}
             ]
         }
     },
@@ -161,7 +161,8 @@ Vue.component('dashboard-map', {
 
         'visibleLayer': String,
 
-        'filters': Object // For filtering occurrence data
+        'filters': Object, // For filtering occurrence data
+        'showCounters': Boolean
     },
     data: function () {
         return {
@@ -185,6 +186,11 @@ Vue.component('dashboard-map', {
         visibleLayer: {
             handler: function (val) {
                 this.setLayerVisibility(val);
+            },
+        },
+        showCounters: {
+            handler: function () {
+                this.replaceVectorTilesLayer();
             },
         },
         filters: {
@@ -235,6 +241,9 @@ Vue.component('dashboard-map', {
         removeVectorTilesLayer: function () {
             this.map.removeLayer(this.vectorTilesLayer);
         },
+        legibleColor: function (color) {
+            return d3.hsl(color).l > 0.5 ? "#000" : "#fff"
+        },
         createVectorTilesLayer: function () {
             var vm = this;
             var l = new ol.layer.VectorTile({
@@ -243,16 +252,21 @@ Vue.component('dashboard-map', {
                     url: vm.tileServerUrlTemplate + '?' + $.param(vm.filters),
                 }),
                 style: function (feature) {
-                    //console.log("Feature:", feature)
-                    //var opacity = feature.properties_.count / 50;
+                    var fillColor = vm.colorScale(feature.properties_.count);
+                    var textValue = vm.showCounters ? '' + feature.properties_.count : ''
+
                     return new ol.style.Style({
                         stroke: new ol.style.Stroke({
                             color: 'white',
                             width: 1,
                         }),
                         fill: new ol.style.Fill({
-                            color: vm.colorScale(feature.properties_.count)
+                            color: fillColor
                         }),
+                        text: new ol.style.Text({
+                            text: textValue,
+                            fill: new ol.style.Fill({color: vm.legibleColor(fillColor)})
+                        })
                     })
                 }
             });

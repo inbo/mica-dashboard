@@ -62,8 +62,8 @@ def occurrences_json(request):
                          'lastPage': page.paginator.page_range.stop,
                          'totalResultsCount': page.paginator.count})
 
-
-ZOOM_TO_HEX_SIZE = {
+MULTIPLIER = 2
+ZOOM_TO_HEX_SIZE_RAW = {
         0: 640000,
         1: 320000,
         2: 160000,
@@ -77,9 +77,13 @@ ZOOM_TO_HEX_SIZE = {
         10: 675,
         11: 335,
         12: 160,
-        13: 80
+        13: 80,
+        14: 40,
+        15: 20,
+        16: 10
         # TODO: show individual occurrences for levels > 13?
 }
+ZOOM_TO_HEX_SIZE = {key: value * MULTIPLIER for key, value in ZOOM_TO_HEX_SIZE_RAW.items()}
 
 
 def _filters_from_request(request):
