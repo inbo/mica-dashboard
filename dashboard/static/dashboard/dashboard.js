@@ -252,6 +252,7 @@ Vue.component('dashboard-map', {
                     url: vm.tileServerUrlTemplate + '?' + $.param(vm.filters),
                 }),
                 style: function (feature) {
+                    console.log("Feature", feature)
                     var fillColor = vm.colorScale(feature.properties_.count);
                     var textValue = vm.showCounters ? '' + feature.properties_.count : ''
 
