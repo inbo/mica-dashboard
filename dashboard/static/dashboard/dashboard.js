@@ -29,7 +29,7 @@ Vue.component('dashboard-occurrence-counter', {
         }
     },
 
-    template: `<h3>{{ count }} occurrence(s) matching selection</h3>`
+    template: `<h5>{{ count }} occurrence(s) matching selection</h5>`
 });
 
 // A single page in the occurrence table
@@ -107,7 +107,7 @@ Vue.component('dashboard-table', {
             currentPage: 1,
             firstPage: null,
             lastPage: null,
-            pageSize: 20,
+            pageSize: 10,
             totalOccurrencesCount: null,
             sortBy: 'id',
             occurrences: [],

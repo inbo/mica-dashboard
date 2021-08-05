@@ -11,13 +11,16 @@
 {% block content-fixed %}
     <h1 class="display-4">MICA Dashboard</h1>
     <p class="font-weight-light">
-        The MICA dashboard shows data originating ... Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus
-        nunc diam, iaculis et lectus vel, iaculis lobortis lectus. Curabitur magna felis, consectetur ac ante in,
-        hendrerit aliquam erat. Nunc condimentum tellus ac diam rhoncus, sed facilisis libero placerat. Phasellus tempus
-        felis vel mi blandit tristique. Donec porta, sapien vel scelerisque sollicitudin, arcu purus posuere risus, ut
-        sagittis arcu est in mi. Cras finibus quam nibh, nec lobortis magna pretium ut. Duis lobortis ac nibh eu
-        aliquet. Morbi vehicula faucibus augue sed sollicitudin. Pellentesque tincidunt sem eu vehicula eleifend. Nunc
-        nec quam id dolor dictum congue et sed elit.
+        This dashboard attempts to give an overview of all muskrat and coypu observations (both catches and field
+        observations) in Flanders, the Netherlands and certain areas in Germany. This dashboard is part of the LIFE MICA
+        project, in which innovative techniques are tested for a more efficient control of muskrat and coypu
+        populations, both invasive species. This dashboard will strengthen cooperation between neighboring countries
+        because information on the presence of muskrats and coypu will be readily shared and used to inform management
+        decisions.
+    </p>
+
+    <p class="font-weight-bold">
+    Be careful when interpreting the data! Not all data is updated regularly and more recent data may therefore be incomplete.
     </p>
 {% endblock %}
 
@@ -68,7 +71,8 @@
                     <div class="form-group">
                         <input type="checkbox" id="showHexaonCounters"
                                v-model="showHexagonCounters">
-                        <label class="col-form-label col-form-label-sm" for="showHexaonCounters">Show hexagon counters</label>
+                        <label class="col-form-label col-form-label-sm" for="showHexaonCounters">Show hexagon
+                            counters</label>
                     </div>
                 </form>
             </div>
