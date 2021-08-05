@@ -9,19 +9,36 @@
 {% endblock %}
 
 {% block content-fixed %}
-    <h1 class="display-4">MICA Dashboard</h1>
-    <p class="font-weight-light">
-        This dashboard attempts to give an overview of all muskrat and coypu observations (both catches and field
-        observations) in Flanders, the Netherlands and certain areas in Germany. This dashboard is part of the LIFE MICA
-        project, in which innovative techniques are tested for a more efficient control of muskrat and coypu
-        populations, both invasive species. This dashboard will strengthen cooperation between neighboring countries
-        because information on the presence of muskrats and coypu will be readily shared and used to inform management
-        decisions.
-    </p>
+    <div class="row">
+        <div class="col"><h1 class="display-4">MICA Dashboard</h1></div>
+    </div>
 
-    <p class="font-weight-bold">
-    Be careful when interpreting the data! Not all data is updated regularly and more recent data may therefore be incomplete.
-    </p>
+    <hr/>
+
+    <div class="row">
+        <div class="col-8 font-weight-light">
+            This dashboard attempts to give an overview of all muskrat and coypu observations (both catches and field
+            observations) in Flanders, the Netherlands and certain areas in Germany. This dashboard is part of the LIFE
+            MICA
+            project, in which innovative techniques are tested for a more efficient control of muskrat and coypu
+            populations, both invasive species. This dashboard will strengthen cooperation between neighboring countries
+            because information on the presence of muskrats and coypu will be readily shared and used to inform
+            management
+            decisions.
+
+            <p class="font-weight-bold">
+                Be careful when interpreting the data! Not all data is updated regularly and more recent data may
+                therefore be incomplete.
+            </p>
+        </div>
+
+        <div class="col d-flex flex-wrap align-items-center">
+            <img class="img-fluid" src="{% static 'dashboard/img/MICA_logo.png' %}">
+        </div>
+    </div>
+
+
+
 {% endblock %}
 
 {% block content-fluid %}
@@ -189,5 +206,5 @@
 {% block extrabodyend %}
     <script src="https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/vue.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.5.0/build/ol.js"></script>
-    <script src="{% static 'dashboard/dashboard.js' %}"></script>
+    <script src="{% static 'dashboard/js/dashboard.js' %}"></script>
 {% endblock %}
