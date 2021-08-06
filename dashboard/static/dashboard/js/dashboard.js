@@ -164,7 +164,9 @@ Vue.component('dashboard-map', {
         'visibleLayer': String,
 
         'filters': Object, // For filtering occurrence data
-        'showCounters': Boolean
+        'showCounters': Boolean,
+
+        'dataLayerOpacity': Number,
     },
     data: function () {
         return {
@@ -175,6 +177,13 @@ Vue.component('dashboard-map', {
         }
     },
     watch: {
+        dataLayerOpacity: {
+            handler: function (val) {
+                if (this.vectorTilesLayer) {
+                    this.vectorTilesLayer.setOpacity(val);
+                }
+            }
+        },
         HexMinOccCount: {
             handler: function (val) {
                 this.replaceVectorTilesLayer();
@@ -253,6 +262,7 @@ Vue.component('dashboard-map', {
                     format: new ol.format.MVT(),
                     url: vm.tileServerUrlTemplate + '?' + $.param(vm.filters),
                 }),
+                opacity: vm.dataLayerOpacity,
                 style: function (feature) {
                     var fillColor = vm.colorScale(feature.properties_.count);
                     var textValue = vm.showCounters ? '' + feature.properties_.count : ''
