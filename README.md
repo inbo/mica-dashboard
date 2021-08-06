@@ -24,6 +24,7 @@ Run management command:
 - Source dataset select: show number of available occurrences
 
 
+- table view: add first/last button
 
 - Adapt docker-compose configuration for production:
     - add nginx

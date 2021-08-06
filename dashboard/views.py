@@ -9,8 +9,6 @@ from jinjasql import JinjaSql
 
 from .models import Occurrence, Dataset, Species
 
-RECENT_OCCURRENCES_START = '2019-01-01'
-
 
 def index(request):
     return render(request, "dashboard/index.html")
@@ -45,6 +43,14 @@ def _extract_bool_request(request, param_name):
         return False
 
 
+def _extract_date_request(request, param_name, date_format="%Y-%m-%d"):
+    """Return a datetime.date object
+    No default value (data is expected present)
+    format: see https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior
+    """
+    return datetime.strptime(request.GET.get(param_name), date_format).date()
+
+
 def occurrences_json(request):
     order = request.GET.get('order')
     limit = _extract_int_request(request, 'limit')
@@ -61,6 +67,7 @@ def occurrences_json(request):
                          'firstPage': page.paginator.page_range.start,
                          'lastPage': page.paginator.page_range.stop,
                          'totalResultsCount': page.paginator.count})
+
 
 MULTIPLIER = 2
 ZOOM_TO_HEX_SIZE_RAW = {
@@ -89,23 +96,24 @@ ZOOM_TO_HEX_SIZE = {key: value * MULTIPLIER for key, value in ZOOM_TO_HEX_SIZE_R
 def _filters_from_request(request):
     dataset_id = _extract_int_request(request, 'datasetId')
     species_id = _extract_int_request(request, 'speciesId')
-    only_recent = _extract_bool_request(request, 'onlyRecent')
+    start_date = _extract_date_request(request, 'startDate')
+    end_date = _extract_date_request(request, 'endDate')
 
-    return dataset_id, species_id, only_recent
+    return dataset_id, species_id, start_date, end_date
 
 
 def _request_to_occurrences_qs(request):
     """Takes a request, extract common parameters used to filter occurrences and return a corresponding QuerySet"""
     qs = Occurrence.objects.all()
 
-    dataset_id, species_id, only_recent = _filters_from_request(request)
+    dataset_id, species_id, start_date, end_date = _filters_from_request(request)
+
+    qs = qs.filter(date__range=[start_date, end_date])
 
     if dataset_id:
         qs = qs.filter(source_dataset_id=dataset_id)
     if species_id:
         qs = qs.filter(species_id=species_id)
-    if only_recent:
-        qs = qs.filter(date__range=[RECENT_OCCURRENCES_START, datetime.today().strftime('%Y-%m-%d')])
 
     return qs
 
@@ -123,7 +131,7 @@ def occurrences_counter(request):
 def occ_min_max_in_grid(request):
     """ Returns the min, max occurrences count per hexagon, according to the zoom level"""
     zoom = _extract_int_request(request, 'zoom')
-    dataset_id, species_id, only_recent = _filters_from_request(request)
+    dataset_id, species_id, start_date, end_date = _filters_from_request(request)
 
     template = f"""
     WITH grid AS (
@@ -133,18 +141,15 @@ def occ_min_max_in_grid(request):
             SELECT MIN(count), MAX(count) FROM grid;
     """
 
-    template = ' '.join(template.replace('\n', '').split())  # Remove multiple withespaces and \n for easier inspection
-
-    start_date = None
-    if only_recent:
-        start_date = RECENT_OCCURRENCES_START
+    template = ' '.join(template.replace('\n', '').split())  # Remove multiple whitespaces and \n for easier inspection
 
     data = {
         "hex_size_meters": ZOOM_TO_HEX_SIZE[zoom],
         "grid_extent_viewport": False,
         "dataset_id": dataset_id,
         "species_id": species_id,
-        "start_date": start_date
+        "start_date": start_date.strftime('%Y-%m-%d'),
+        "end_date": end_date.strftime('%Y-%m-%d')
     }
 
     cursor = connection.cursor()
@@ -181,6 +186,9 @@ def _get_grid_query_fragment():
                             {% if start_date %}
                                 AND occ.date >= TO_DATE({{ start_date }}, 'YYYY-MM-DD')
                             {% endif %}
+                            {% if end_date %}
+                                AND occ.date <= TO_DATE({{ end_date }}, 'YYYY-MM-DD')
+                            {% endif %}
                             ))
                             
                     AS dashboard_filtered_occ
@@ -191,7 +199,7 @@ def _get_grid_query_fragment():
 
 
 def mvt_tiles(request, zoom, x, y):
-    dataset_id, species_id, only_recent = _filters_from_request(request)
+    dataset_id, species_id, start_date, end_date = _filters_from_request(request)
 
     template = f"""
             WITH grid AS (
@@ -205,11 +213,7 @@ def mvt_tiles(request, zoom, x, y):
             SELECT st_asmvt(mvtgeom.*) FROM mvtgeom;
             """
 
-    template = ' '.join(template.replace('\n', '').split())  # Remove multiple withespaces and \n for easier inspection
-
-    start_date = None
-    if only_recent:
-        start_date = RECENT_OCCURRENCES_START
+    template = ' '.join(template.replace('\n', '').split())  # Remove multiple whitespaces and \n for easier inspection
 
     data = {
         "hex_size_meters": ZOOM_TO_HEX_SIZE[zoom],
@@ -217,7 +221,8 @@ def mvt_tiles(request, zoom, x, y):
 
         "dataset_id": dataset_id,
         "species_id": species_id,
-        "start_date": start_date,
+        "start_date": start_date.strftime('%Y-%m-%d'),
+        "end_date": end_date.strftime('%Y-%m-%d'),
 
         "zoom": zoom,
         "x": x,

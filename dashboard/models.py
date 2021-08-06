@@ -39,5 +39,6 @@ class Occurrence(models.Model):
             'lat': str(lat)[:6],
             'lon': str(lon)[:6],
             'speciesName': self.species.name,
-            'datasetName': self.source_dataset.name
+            'datasetName': self.source_dataset.name,
+            'date': str(self.date)
         }

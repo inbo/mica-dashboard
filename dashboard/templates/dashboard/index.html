@@ -36,9 +36,6 @@
             <img class="img-fluid" src="{% static 'dashboard/img/MICA_logo.png' %}">
         </div>
     </div>
-
-
-
 {% endblock %}
 
 {% block content-fluid %}
@@ -71,10 +68,15 @@
                     </div>
 
                     <div class="form-group">
-                        <input type="checkbox" id="onlyRecentOccurrences"
-                               v-model="selectedFilters.onlyRecent">
-                        <label class="col-form-label col-form-label-sm" for="onlyRecentOccurrences">Show only recent
-                            (2019+) occurrences</label>
+                        <label class="col-form-label col-form-label-sm" for="startDate">Start date</label>
+                        <input type="date" id="startDate"
+                               v-model="selectedFilters.startDate">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="col-form-label col-form-label-sm" for="endDate">End date</label>
+                        <input type="date" id="endDate"
+                               v-model="selectedFilters.endDate">
                     </div>
 
                     <h4 class="my-3 text-center">Map style</h4>
@@ -127,7 +129,8 @@
                         selectedFilters: {
                             datasetId: null,
                             speciesId: null,
-                            onlyRecent: false,
+                            startDate: '2019-01-01',
+                            endDate: '2021-08-06'
                         },
 
                         endpoints: {

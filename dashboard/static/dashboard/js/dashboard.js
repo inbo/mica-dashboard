@@ -47,6 +47,7 @@ Vue.component('occurrence-table-page', {
                     <th scope="row">{{ occ.id }}</th>
                     <td>{{ occ.lat }}</td>
                     <td>{{ occ.lon }}</td>
+                    <td>{{ occ.date }}</td>
                     <td>{{ occ.speciesName }}</td>
                     <td>{{ occ.datasetName }}</td>
                  </tr>
@@ -117,6 +118,7 @@ Vue.component('dashboard-table', {
                 {'sortId': 'id', 'label': '#',},
                 {'sortId': null, 'label': 'Lat',},
                 {'sortId': null, 'label': 'Lon',},
+                {'sortId': null, 'label': 'Date',},
                 {'sortId': 'species__name', 'label': 'Species',},
                 {'sortId': 'source_dataset__name', 'label': 'Dataset',}
             ]
@@ -252,7 +254,6 @@ Vue.component('dashboard-map', {
                     url: vm.tileServerUrlTemplate + '?' + $.param(vm.filters),
                 }),
                 style: function (feature) {
-                    console.log("Feature", feature)
                     var fillColor = vm.colorScale(feature.properties_.count);
                     var textValue = vm.showCounters ? '' + feature.properties_.count : ''
 
