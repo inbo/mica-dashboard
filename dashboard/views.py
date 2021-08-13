@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from django.core.paginator import Paginator
+from django.db.models import Max, Min
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.db import connection
@@ -44,11 +45,17 @@ def _extract_bool_request(request, param_name):
 
 
 def _extract_date_request(request, param_name, date_format="%Y-%m-%d"):
-    """Return a datetime.date object
-    No default value (data is expected present)
+    """Return a datetime.date object (default: None)
+
     format: see https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior
     """
-    return datetime.strptime(request.GET.get(param_name), date_format).date()
+    val = request.GET.get(param_name, None)
+
+    if val:
+        val = datetime.strptime(val, date_format).date()
+
+    return val
+
 
 
 def occurrences_json(request):
@@ -108,12 +115,14 @@ def _request_to_occurrences_qs(request):
 
     dataset_id, species_id, start_date, end_date = _filters_from_request(request)
 
-    qs = qs.filter(date__range=[start_date, end_date])
-
     if dataset_id:
         qs = qs.filter(source_dataset_id=dataset_id)
     if species_id:
         qs = qs.filter(species_id=species_id)
+    if start_date:
+        qs = qs.filter(date__gte=start_date)
+    if end_date:
+        qs = qs.filter(date__lte=end_date)
 
     return qs
 
@@ -240,3 +249,15 @@ def mvt_tiles(request, zoom, x, y):
         return HttpResponse(row[0].tobytes(), content_type='application/vnd.mapbox-vector-tile')
     else:
         return HttpResponse('', content_type='application/vnd.mapbox-vector-tile')
+
+
+def occurrences_date_range(request):
+    """Returns the earliest and latest date for occurrences
+
+    Same filters than other endpoins
+    """
+
+    qs = _request_to_occurrences_qs(request)
+    qs = qs.aggregate(Max('date'), Min('date'))
+
+    return JsonResponse({'min': qs['date__min'], 'max': qs['date__max']})

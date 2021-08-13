@@ -25,6 +25,7 @@ urlpatterns = [
     path('api/available_datasets/', views.available_datasets, name="dashboard-api-available-datasets"),
     path('api/available_species/', views.available_species, name="dashboard-api-available-species"),
     path('api/occurrences_count/', views.occurrences_counter, name="dashboard-api-occurrences-counter"),
+    path('api/occurrences_date_range', views.occurrences_date_range, name="dashboard-api-occurrences-date-range"),
 
     path('api/tiles/<int:zoom>/<int:x>/<int:y>.mvt', views.mvt_tiles, name="dashboard-api-mvt-tiles"),
     path('api/occ_min_max_in_grid/', views.occ_min_max_in_grid, name="dashboard-api-min-max-in-grid"),
