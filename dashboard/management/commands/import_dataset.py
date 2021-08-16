@@ -11,16 +11,6 @@ from dwca.read import DwCAReader
 
 from dashboard.models import Dataset, Occurrence, Species
 
-# Number of decimal places kept in the coordinates (3 = 111m accuracy at the equator => better in Belgium). This is done
-# for permormance reasons (GeoJSON file size).
-COORDINATES_DECIMAL_PLACES = 4
-
-GBIF_TAXA_IDS_TO_IMPORT = [5219858, 4264680]  # We only import those species
-
-def truncate(number, digits) -> float:
-    stepper = 10.0 ** digits
-    return math.trunc(stepper * number) / stepper
-
 
 def _path_for_dataset(gbif_dataset_id: str):
     return os.path.join(settings.DATASET_TEMPORARY_DIR, f'{gbif_dataset_id}.zip')
@@ -33,7 +23,7 @@ def _dataset_download_exists(gbif_dataset_id: str):
 
 
 class Command(BaseCommand):
-    help = 'Import the dataset whose gbif_dataset_id is passed as argument.'
+    help = '(re)import the dataset whose gbif_dataset_id is passed as argument.'
 
     def _download_dataset(self, gbif_dataset_id: str):
         self.stdout.write('I will download the dataset')
@@ -47,18 +37,18 @@ class Command(BaseCommand):
 
     def _ingest_dataset(self, gbif_dataset_id: str, dataset_name: str, catches: bool):
         with DwCAReader(_path_for_dataset(gbif_dataset_id)) as dwca:
-            self.stdout.write(self.style.SUCCESS('Ok, dataset successfully opened'))
+            self.stdout.write(self.style.SUCCESS('Ok, DwC-A successfully opened'))
 
             dataset = Dataset.objects.create(gbif_id=gbif_dataset_id, name=dataset_name, contains_catches=catches)
 
             for row in dwca:
-                if int(row.data['http://rs.gbif.org/terms/1.0/acceptedTaxonKey']) in GBIF_TAXA_IDS_TO_IMPORT:
+                if int(row.data['http://rs.gbif.org/terms/1.0/acceptedTaxonKey']) in settings.GBIF_TAXA_IDS_TO_IMPORT:
                     species, _ = Species.objects.get_or_create(name=row.data[qn('scientificName')])
 
                     # Some catches have no location...
                     try:
-                        point = Point(truncate(float(row.data[qn('decimalLongitude')]), COORDINATES_DECIMAL_PLACES),
-                                      truncate(float(row.data[qn('decimalLatitude')]), COORDINATES_DECIMAL_PLACES),
+                        point = Point(float(row.data[qn('decimalLongitude')]),
+                                      float(row.data[qn('decimalLatitude')]),
                                       srid=4326)
                     except ValueError:
                         point = None
@@ -109,6 +99,7 @@ class Command(BaseCommand):
             (item for item in settings.DATASET_CONFIG if item["gbif_id"] == dataset_id), None)
 
         if dataset_config_entry:  # Okay, we have some configuration for this dataset:
+            self.stdout.write(f"I've been asked to ingest dataset: {dataset_id}")
             if (not _dataset_download_exists(dataset_id)) or options['force_download']:
                 self._download_dataset(dataset_id)
 

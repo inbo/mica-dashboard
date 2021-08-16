@@ -145,5 +145,7 @@ DATASET_CONFIG = (
     {'gbif_id': '629befd5-fb45-4365-95c4-d07e72479b37', 'name': 'Observations.be - Non-native species occurrences in Wallonia, Belgium', 'catches': False},
 )
 
+GBIF_TAXA_IDS_TO_IMPORT = [5219858, 4264680]  # We only import those species
+
 # A (writable by Django) directory where GBIF datasets are temporarily stored before their ingestion
 DATASET_TEMPORARY_DIR = os.path.join(BASE_DIR, 'initial_datasets_temp')
