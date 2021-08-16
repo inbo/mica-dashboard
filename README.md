@@ -12,6 +12,14 @@ Run management command:
 
     $ docker-compose run web python manage.py <DJANGO_COMMAND>
 
+# Deployment
+
+This project can be deployed as a classic Django project, without Docker(-compose)
+
+1) Copy `mica/settings_local.template.py` to `mica/settings_local.py` and customize your local settings there.
+
+
+
 # TODO:
 - Import command: add command/flag to import everything
 - Occurrence table: add link to GBIF (dataset, occurrence)

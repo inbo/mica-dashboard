@@ -19,15 +19,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'USE SOMETHING SECURE HERE!'
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = ["0.0.0.0", "cc42aed8cd44.ngrok.io"]
-
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -71,21 +62,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'mica.wsgi.application'
-
-
-# Database
-# https://docs.djangoproject.com/en/3.1/ref/settings/#databases
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.contrib.gis.db.backends.postgis',
-        'NAME': 'postgis',
-        'USER': 'postgis',
-        'PASSWORD': 'postgis',
-        'HOST': 'db',
-        'PORT': 5432,
-    }
-}
 
 
 # Password validation
@@ -149,3 +125,5 @@ GBIF_TAXA_IDS_TO_IMPORT = [5219858, 4264680]  # We only import those species
 
 # A (writable by Django) directory where GBIF datasets are temporarily stored before their ingestion
 DATASET_TEMPORARY_DIR = os.path.join(BASE_DIR, 'initial_datasets_temp')
+
+from .settings_local import *
