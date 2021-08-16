@@ -45,16 +45,16 @@ def _extract_bool_request(request, param_name):
 
 
 def _extract_date_request(request, param_name, date_format="%Y-%m-%d"):
-    """Return a datetime.date object (default: None)
+    """Return a datetime.date object (or None is the param doesn't exist or is empty)
 
     format: see https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior
     """
     val = request.GET.get(param_name, None)
 
-    if val:
-        val = datetime.strptime(val, date_format).date()
+    if val is not None and val != '':
+        return datetime.strptime(val, date_format).date()
 
-    return val
+    return None
 
 
 
@@ -157,9 +157,12 @@ def occ_min_max_in_grid(request):
         "grid_extent_viewport": False,
         "dataset_id": dataset_id,
         "species_id": species_id,
-        "start_date": start_date.strftime('%Y-%m-%d'),
-        "end_date": end_date.strftime('%Y-%m-%d')
     }
+
+    if start_date:
+        data["start_date"] = start_date.strftime('%Y-%m-%d')
+    if end_date:
+        data["end_date"] = end_date.strftime('%Y-%m-%d')
 
     cursor = connection.cursor()
     j = JinjaSql()
