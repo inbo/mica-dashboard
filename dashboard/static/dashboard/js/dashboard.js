@@ -201,14 +201,15 @@ Vue.component('dashboard-map', {
         },
         showCounters: {
             handler: function () {
-                this.replaceVectorTilesLayer();
+                if (this.vectorTilesLayer) {
+                    this.vectorTilesLayer.setStyle(this.vectorTilesLayerStyleFunction)
+                }
             },
         },
         filters: {
             deep: true,
             handler: function (val) {
                 this.loadOccMinMax(this.initialZoom, this.filters);
-                this.replaceVectorTilesLayer();
             },
         }
 
@@ -217,7 +218,6 @@ Vue.component('dashboard-map', {
         colorScale: function () {
             return d3.scaleSequentialLog(d3.interpolateBlues)
                 .domain([this.HexMinOccCount, this.HexMaxOccCount])
-
         },
         allLayers: function () {
             return this.map.getLayers().getArray();
@@ -232,6 +232,27 @@ Vue.component('dashboard-map', {
                 return (l.get('name') == 'vectorTilesLayer')
             });
         },
+        vectorTilesLayerStyleFunction: function () {
+            var vm = this;
+            return function (feature) {
+                var fillColor = vm.colorScale(feature.properties_.count);
+                var textValue = vm.showCounters ? '' + feature.properties_.count : ''
+
+                return new ol.style.Style({
+                    stroke: new ol.style.Stroke({
+                        color: 'grey',
+                        width: 1,
+                    }),
+                    fill: new ol.style.Fill({
+                        color: fillColor
+                    }),
+                    text: new ol.style.Text({
+                        text: textValue,
+                        fill: new ol.style.Fill({color: vm.legibleColor(fillColor)})
+                    })
+                })
+            }
+        }
     },
     methods: {
         replaceVectorTilesLayer: function () {
@@ -263,24 +284,7 @@ Vue.component('dashboard-map', {
                     url: vm.tileServerUrlTemplate + '?' + $.param(vm.filters),
                 }),
                 opacity: vm.dataLayerOpacity,
-                style: function (feature) {
-                    var fillColor = vm.colorScale(feature.properties_.count);
-                    var textValue = vm.showCounters ? '' + feature.properties_.count : ''
-
-                    return new ol.style.Style({
-                        stroke: new ol.style.Stroke({
-                            color: 'white',
-                            width: 1,
-                        }),
-                        fill: new ol.style.Fill({
-                            color: fillColor
-                        }),
-                        text: new ol.style.Text({
-                            text: textValue,
-                            fill: new ol.style.Fill({color: vm.legibleColor(fillColor)})
-                        })
-                    })
-                }
+                style: vm.vectorTilesLayerStyleFunction
             });
 
             l.set('name', 'vectorTilesLayer')
@@ -297,7 +301,6 @@ Vue.component('dashboard-map', {
                 url: this.minMaxUrl,
                 data: params
             }).done(function (data) {
-                //console.log(data)
                 vm.HexMinOccCount = data.min;
                 vm.HexMaxOccCount = data.max;
             })
