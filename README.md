@@ -21,7 +21,6 @@ This project can be deployed as a classic Django project, without Docker(-compos
 
 
 # TODO:
-- Import command: add command/flag to import everything
 - Occurrence table: add link to GBIF (dataset, occurrence)
 - Occurrence table: show specific occurrence on Map
 - Hexagons density map: swithc to individual occurrences at high zoom level
@@ -34,12 +33,6 @@ This project can be deployed as a classic Django project, without Docker(-compos
 
 - table view: add first/last button
 
-- Adapt docker-compose configuration for production:
-    - add nginx
-    - replace dev server by gunicorn
-    - different settings per environment (prod VS dev)? Manage specific settings (SECRET_KEY)?
-    - is the dbdata volume a good solution to store data in prod?
-    - where to deploy easily?
     
 - Data questions and assumptions to clarify:
     - Some datasets haves tons of species: filter on import for just the two species of interest?

@@ -161,8 +161,6 @@ Vue.component('dashboard-map', {
         'initialLon': Number,
         'initialZoom': Number,
 
-        'visibleLayer': String,
-
         'filters': Object, // For filtering occurrence data
         'showCounters': Boolean,
 
@@ -194,11 +192,6 @@ Vue.component('dashboard-map', {
                 this.replaceVectorTilesLayer();
             },
         },
-        visibleLayer: {
-            handler: function (val) {
-                this.setLayerVisibility(val);
-            },
-        },
         showCounters: {
             handler: function () {
                 if (this.vectorTilesLayer) {
@@ -219,16 +212,8 @@ Vue.component('dashboard-map', {
             return d3.scaleSequentialLog(d3.interpolateBlues)
                 .domain([this.HexMinOccCount, this.HexMaxOccCount])
         },
-        allLayers: function () {
-            return this.map.getLayers().getArray();
-        },
-        dataLayers: function () {
-            return this.allLayers.filter(function (l) {
-                return l.get('dataLayer') == true;
-            })
-        },
         vectorTilesLayer: function () {
-            return this.dataLayers.find(function (l) {
+            return this.map.getLayers().getArray().find(function (l) {
                 return (l.get('name') == 'vectorTilesLayer')
             });
         },
@@ -261,15 +246,6 @@ Vue.component('dashboard-map', {
             }
             this.map.addLayer(this.createVectorTilesLayer());
         },
-        setLayerVisibility: function (layerName) {
-            this.dataLayers.forEach(function (l) {
-                if (l.get('name') === layerName) {
-                    l.setVisible(true);
-                } else {
-                    l.setVisible(false);
-                }
-            })
-        },
         removeVectorTilesLayer: function () {
             this.map.removeLayer(this.vectorTilesLayer);
         },
@@ -288,7 +264,6 @@ Vue.component('dashboard-map', {
             });
 
             l.set('name', 'vectorTilesLayer')
-            l.set('dataLayer', true);
             return l;
         },
         loadOccMinMax: function (zoomLevel, filters) {
@@ -326,7 +301,6 @@ Vue.component('dashboard-map', {
         this.loadOccMinMax(this.initialZoom, this.filters);
         this.map = this.createBaseMap();
         this.map.setTarget(this.$refs['map-root']); // Assign the map to div and display
-        this.setLayerVisibility(this.visibleLayer);
     },
     template: '<div id="map" class="map" ref="map-root" style="height: 500px; width: 100%;"></div>'
 })
