@@ -11,7 +11,7 @@ class Species(models.Model):
 class Dataset(models.Model):
     name = models.CharField(max_length=100)
     gbif_id = models.CharField(max_length=100, unique=True)
-    contains_catches = models.BooleanField() # Some datasets contains catches, other contains observations. The distinction is currently made at the dataset level
+    contains_catches = models.BooleanField()  # Some datasets contains catches, other contains observations. The distinction is currently made at the dataset level
 
     def __str__(self):
         return self.name
@@ -30,6 +30,11 @@ class Occurrence(models.Model):
     municipality = models.CharField(max_length=100, blank=True)
     coordinates_uncertainty = models.FloatField(blank=True, null=True) # in meters
     georeference_remarks = models.TextField(blank=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['date'])
+        ]
 
     def as_dict(self):
         lon, lat = self.location.transform(4326, clone=True).coords
