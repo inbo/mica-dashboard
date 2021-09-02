@@ -8,6 +8,7 @@ from django.db import connection
 
 from jinjasql import JinjaSql
 
+from .helpers import readable_string
 from .models import Occurrence, Dataset, Species
 
 
@@ -57,7 +58,6 @@ def _extract_date_request(request, param_name, date_format="%Y-%m-%d"):
     return None
 
 
-
 def occurrences_json(request):
     order = request.GET.get('order')
     limit = _extract_int_request(request, 'limit')
@@ -78,24 +78,24 @@ def occurrences_json(request):
 
 MULTIPLIER = 2
 ZOOM_TO_HEX_SIZE_RAW = {
-        0: 640000,
-        1: 320000,
-        2: 160000,
-        3: 80000,
-        4: 40000,
-        5: 20000,
-        6: 10000,
-        7: 5000,
-        8: 2500,
-        9: 1250,
-        10: 675,
-        11: 335,
-        12: 160,
-        13: 80,
-        14: 40,
-        15: 20,
-        16: 10
-        # TODO: show individual occurrences for levels > 13?
+    0: 640000,
+    1: 320000,
+    2: 160000,
+    3: 80000,
+    4: 40000,
+    5: 20000,
+    6: 10000,
+    7: 5000,
+    8: 2500,
+    9: 1250,
+    10: 675,
+    11: 335,
+    12: 160,
+    13: 80,
+    14: 40,
+    15: 20,
+    16: 10
+    # TODO: show individual occurrences for levels > 13?
 }
 ZOOM_TO_HEX_SIZE = {key: value * MULTIPLIER for key, value in ZOOM_TO_HEX_SIZE_RAW.items()}
 
@@ -133,7 +133,6 @@ def occurrences_counter(request):
     filters: same format than other endpoints: getting occurrences, map tiles, ...
     """
     qs = _request_to_occurrences_qs(request)
-
     return JsonResponse({'count': qs.count()})
 
 
@@ -142,17 +141,14 @@ def occ_min_max_in_grid(request):
     zoom = _extract_int_request(request, 'zoom')
     dataset_id, species_id, start_date, end_date = _filters_from_request(request)
 
-    template = f"""
+    sql_template = readable_string(f"""
     WITH grid AS (
-                {_get_grid_query_fragment()}
+        {grid_query_fragment}
             )
+        SELECT MIN(count), MAX(count) FROM grid;
+    """)
 
-            SELECT MIN(count), MAX(count) FROM grid;
-    """
-
-    template = ' '.join(template.replace('\n', '').split())  # Remove multiple whitespaces and \n for easier inspection
-
-    data = {
+    sql_params = {
         "hex_size_meters": ZOOM_TO_HEX_SIZE[zoom],
         "grid_extent_viewport": False,
         "dataset_id": dataset_id,
@@ -160,21 +156,19 @@ def occ_min_max_in_grid(request):
     }
 
     if start_date:
-        data["start_date"] = start_date.strftime('%Y-%m-%d')
+        sql_params["start_date"] = start_date.strftime('%Y-%m-%d')
     if end_date:
-        data["end_date"] = end_date.strftime('%Y-%m-%d')
+        sql_params["end_date"] = end_date.strftime('%Y-%m-%d')
 
-    cursor = connection.cursor()
     j = JinjaSql()
+    query, bind_params = j.prepare_query(sql_template, sql_params)
+    with connection.cursor() as cursor:
+        cursor.execute(query, bind_params)
+        r = cursor.fetchone()
+        return JsonResponse({'min': r[0], 'max': r[1]})
 
-    query, bind_params = j.prepare_query(template, data)
-    cursor.execute(query, bind_params)
-    r = cursor.fetchone()
-    return JsonResponse({'min': r[0], 'max': r[1]})
 
-
-def _get_grid_query_fragment():
-    return """
+grid_query_fragment = """
     SELECT COUNT(*), hexes.geom
                     FROM
                         ST_HexagonGrid(
@@ -213,19 +207,16 @@ def _get_grid_query_fragment():
 def mvt_tiles(request, zoom, x, y):
     dataset_id, species_id, start_date, end_date = _filters_from_request(request)
 
-    template = f"""
+    template = readable_string(f"""
             WITH grid AS (
-                {_get_grid_query_fragment()}
-            )   
+                {grid_query_fragment}
+            )""" + """
 
             ,mvtgeom AS (
-                SELECT ST_AsMVTGeom(geom, TileBBox({{{{{ zoom }}}}}, {{{{{ x }}}}}, {{{{{ y }}}}}, 3857)) AS geom, count FROM grid
+                SELECT ST_AsMVTGeom(geom, TileBBox({{ zoom }}, {{ x }}, {{ y }}, 3857)) AS geom, count FROM grid
             )
 
-            SELECT st_asmvt(mvtgeom.*) FROM mvtgeom;
-            """
-
-    template = ' '.join(template.replace('\n', '').split())  # Remove multiple whitespaces and \n for easier inspection
+            SELECT st_asmvt(mvtgeom.*) FROM mvtgeom;""")
 
     data = {
         "hex_size_meters": ZOOM_TO_HEX_SIZE[zoom],
@@ -241,23 +232,24 @@ def mvt_tiles(request, zoom, x, y):
         "y": y
     }
 
-    cursor = connection.cursor()
     j = JinjaSql()
-
     query, bind_params = j.prepare_query(template, data)
-    cursor.execute(query, bind_params)
 
-    if cursor.rowcount != 0:
-        row = cursor.fetchone()
-        return HttpResponse(row[0].tobytes(), content_type='application/vnd.mapbox-vector-tile')
-    else:
-        return HttpResponse('', content_type='application/vnd.mapbox-vector-tile')
+    with connection.cursor() as cursor:
+        cursor.execute(query, bind_params)
+
+        if cursor.rowcount != 0:
+            data = cursor.fetchone()[0].tobytes()
+        else:
+            data = ''
+
+        return HttpResponse(data, content_type='application/vnd.mapbox-vector-tile')
 
 
 def occurrences_date_range(request):
     """Returns the earliest and latest date for occurrences
 
-    Same filters than other endpoins
+    Same filters than other endpoints
     """
 
     qs = _request_to_occurrences_qs(request)
