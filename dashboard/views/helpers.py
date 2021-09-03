@@ -37,6 +37,9 @@ def request_to_occurrences_qs(request):
 
     dataset_id, species_id, start_date, end_date = filters_from_request(request)
 
+    # !! IMPORTANT !! Make sure the occurrence filtering here is equivalent to what's done in
+    # views.tileserver.JINJASQL_FRAGMENT_FILTER_OCCURRENCES. Otherwise, occurrences returned on the map and on other
+    # components (table, ...) will be inconsistent.
     if dataset_id:
         qs = qs.filter(source_dataset_id=dataset_id)
     if species_id:
