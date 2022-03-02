@@ -2,6 +2,10 @@
 
 Developed using docker-compose.
 
+Deployed at the following URLs:
+
+- UAT version: http://mica-uat.inbo.be/
+
 # Howto:
 
 Launch the app:
