@@ -1,4 +1,4 @@
-Django==3.2.6
+Django==3.2.12
 psycopg2-binary==2.8.6
 python-dwca-reader==0.14.0
 jinjasql==0.1.8
