@@ -165,16 +165,26 @@ Vue.component('dashboard-map', {
         'showCounters': Boolean,
 
         'dataLayerOpacity': Number,
+
+        'overlayServerUrl': String,
+        'overlayId': null
     },
     data: function () {
         return {
             map: null,
             vectorSource: new ol.source.Vector(),
+            areasOverlayCollection: new ol.Collection(),
             HexMinOccCount: 1,
             HexMaxOccCount: 1
         }
     },
     watch: {
+        overlayId: {
+            immediate: true,
+            handler: function (overlayId) {
+                this.refreshAreas();
+            }
+        },
         dataLayerOpacity: {
             handler: function (val) {
                 if (this.vectorTilesLayer) {
@@ -260,7 +270,8 @@ Vue.component('dashboard-map', {
                     url: vm.tileServerUrlTemplate + '?' + $.param(vm.filters),
                 }),
                 opacity: vm.dataLayerOpacity,
-                style: vm.vectorTilesLayerStyleFunction
+                style: vm.vectorTilesLayerStyleFunction,
+                zIndex: 2
             });
 
             l.set('name', 'vectorTilesLayer')
@@ -282,19 +293,54 @@ Vue.component('dashboard-map', {
 
         },
         createBaseMap: function () {
-            var baseLayer = new ol.layer.Tile({
-                source: new ol.source.OSM({url: "http://a.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"})
+            const baseLayer = new ol.layer.Tile({
+                source: new ol.source.OSM({url: "http://a.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"}),
+                zIndex: 1
+            })
+
+            const areasGroup = new ol.layer.Group({
+                layers: this.areasOverlayCollection,
             })
 
             return new ol.Map({
                 layers: [
-                    baseLayer
+                    baseLayer,
+                    areasGroup
                 ],
                 view: new ol.View({
                     center: ol.proj.fromLonLat([this.initialLon, this.initialLat]),
                     zoom: this.initialZoom
                 })
             });
+        },
+        refreshAreas: function () {
+            let vm = this;
+            this.areasOverlayCollection.clear();
+            if (this.overlayId !== null) {
+                $.ajax(this.overlayServerUrl.replace('{id}', this.overlayId.toString()))
+                    .done(function (data) {
+                        const vectorSource = new ol.source.Vector({
+                            features: new ol.format.GeoJSON().readFeatures(data, {
+                                dataProjection: "EPSG:4326",
+                                featureProjection: "EPSG:3857",
+                            }),
+                        });
+
+                        const vectorLayer = new ol.layer.Vector({
+                            source: vectorSource,
+                            style: new ol.style.Style({
+                                stroke: new ol.style.Stroke({
+                                    color: "red",
+                                    width: 3,
+                                }),
+                            }),
+                            zIndex: 3
+                        });
+
+                        vm.areasOverlayCollection.push(vectorLayer);
+                    })
+            }
+
         }
     },
     mounted() {

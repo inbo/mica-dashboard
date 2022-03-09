@@ -1,5 +1,6 @@
 from django.contrib.gis.db import models
 
+DATA_SRID = 3857
 
 class Species(models.Model):
     name = models.CharField(max_length=100)
@@ -27,7 +28,7 @@ class Occurrence(models.Model):
                                        on_delete=models.CASCADE)  # We can update a dataset by deleting it (and all its observations) then replace it
     individual_count = models.IntegerField(default=1)
     date = models.DateField()
-    location = models.PointField(blank=True, null=True, srid=3857)
+    location = models.PointField(blank=True, null=True, srid=DATA_SRID)
     municipality = models.CharField(max_length=100, blank=True)
     coordinates_uncertainty = models.FloatField(blank=True, null=True)  # in meters
     georeference_remarks = models.TextField(blank=True)
@@ -48,3 +49,23 @@ class Occurrence(models.Model):
             'datasetName': self.source_dataset.name,
             'date': str(self.date)
         }
+
+
+class Area(models.Model):
+    """An area that can be shown to the user, or used to filter observations"""
+    mpoly = models.MultiPolygonField(srid=DATA_SRID)
+    name = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.name
+
+    def to_dict(self, include_geojson: bool):
+        d = {
+            "id": self.pk,
+            "name": self.name,
+        }
+
+        if include_geojson:
+            d["geojson_str"] = self.mpoly.geojson
+
+        return d

@@ -1,9 +1,10 @@
 from django.core.paginator import Paginator
+from django.core.serializers import serialize
 from django.db.models import Max, Min
-from django.http import JsonResponse
-from django.shortcuts import render
+from django.http import JsonResponse, HttpRequest, HttpResponse
+from django.shortcuts import render, get_object_or_404
 
-from dashboard.models import Dataset, Species
+from dashboard.models import Dataset, Species, Area
 
 from dashboard.views.helpers import request_to_occurrences_qs, extract_int_request
 
@@ -59,3 +60,19 @@ def occurrences_date_range(request):
     qs = qs.aggregate(Max('date'), Min('date'))
 
     return JsonResponse({'min': qs['date__min'], 'max': qs['date__max']})
+
+
+def area_geojson(_: HttpRequest, id: int):
+    """Return a specific area as GeoJSON"""
+    area = get_object_or_404(Area, pk=id)
+
+    return HttpResponse(serialize("geojson", [area]), content_type="application/json")
+
+
+def areas_list_json(request: HttpRequest) -> JsonResponse:
+    """A list of all areas available"""
+    areas = Area.objects.all()
+
+    return JsonResponse(
+        [area.to_dict(include_geojson=False) for area in areas], safe=False
+    )

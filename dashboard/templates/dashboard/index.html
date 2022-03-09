@@ -58,7 +58,7 @@
 
                     <div class="form-group row">
                         <label class="col-sm-6 col-form-label col-form-label-sm" for="selectedSpecies">Species</label>
-                        <select class="col-sm-5 form-control form-control-sm" id="selectedDataset"
+                        <select class="col-sm-5 form-control form-control-sm" id="selectedSpecies"
                                 v-model="selectedFilters.speciesId">
                             <option :value="null">-- ALL --</option>
                             <option v-for="species in availableSpecies" :key="species.id" :value="species.id">[[
@@ -92,6 +92,17 @@
                         <label class="col-form-label col-form-label-sm" for="showHexaonCounters">Show hexagon
                             counters</label>
                     </div>
+
+                    <div class="form-group row">
+                        <label class="col-sm-6 col-form-label col-form-label-sm" for="selectedOverlay">Overlay</label>
+                        <select class="col-sm-5 form-control form-control-sm" id="selectedOverlay"
+                                v-model="selectedOverlayId">
+                            <option :value="null">-- None --</option>
+                            <option v-for="overlay in availableOverlays" :key="overlay.id" :value="overlay.id">[[
+                                overlay.name ]]
+                            </option>
+                        </select>
+                    </div>
                 </form>
             </div>
 
@@ -105,9 +116,11 @@
                         :initial-lat="51.58" :initial-lon="4.67" :initial-zoom="initialZoomLevel"
                         :min-max-url="endpoints.minMaxOccCountUrl"
                         :tile-server-url-template="endpoints.tileServerUrlTemplate"
+                        :overlay-server-url="endpoints.areaGeojsonUrl"
                         :filters="selectedFilters"
                         :show-counters="showHexagonCounters"
                         :data-layer-opacity="dataLayerOpacity"
+                        :overlay-id="selectedOverlayId"
                 ></dashboard-map>
 
                 <h2>Table view</h2>
@@ -135,6 +148,8 @@
                         endpoints: {
                             availableDatasetsUrl: "{% url 'dashboard-api-available-datasets' %}",
                             availableSpeciesUrl: "{% url 'dashboard-api-available-species' %}",
+                            availableOverlaysUrl: "{% url 'dashboard-api-available-areas' %}",
+                            areaGeojsonUrl: "{% url 'dashboard-api-area-geojson' id=1 %}".replace('1', '{id}'),
                             minMaxOccCountUrl: "{% url 'dashboard-api-min-max-in-grid' %}",
                             counterUrl: "{% url 'dashboard-api-occurrences-counter' %}",
                             occurrencesJsonUrl: "{% url 'dashboard-api-occurrences-json' %}",
@@ -144,6 +159,7 @@
 
                         availableDatasets: [],
                         availableSpecies: [],
+                        availableOverlays: [],
                         availableOccurrencesDateRange: {
                             min: null,
                             max: null
@@ -151,12 +167,14 @@
 
                         showHexagonCounters: true,
                         initialZoomLevel: 7,
-                        dataLayerOpacity: 0.9
+                        dataLayerOpacity: 0.9,
+                        selectedOverlayId: null
                     }
                 },
                 mounted() {
                     this.populateDatasetSelect();
                     this.populateSpeciesSelect();
+                    this.populateOverlaysSelect();
                 },
 
                 watch: {
@@ -205,6 +223,14 @@
                             url: this.endpoints.availableDatasetsUrl,
                         }).done(function (data) {
                             vm.availableDatasets = data;
+                        })
+                    },
+                    populateOverlaysSelect: function () {
+                        var vm = this;
+                        $.ajax({
+                            url: this.endpoints.availableOverlaysUrl,
+                        }).done(function (data) {
+                            vm.availableOverlays = data;
                         })
                     },
                     clean: function (obj) {

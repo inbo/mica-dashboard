@@ -1,5 +1,5 @@
 from django.contrib.gis import admin
-from .models import Occurrence, Species, Dataset
+from .models import Occurrence, Species, Dataset, Area
 
 
 class OccurrenceAdmin(admin.OSMGeoAdmin):
@@ -13,10 +13,17 @@ admin.site.register(Occurrence, OccurrenceAdmin)
 class DatasetAdmin(admin.ModelAdmin):
     pass
 
-admin.site.register(Dataset, DatasetAdmin)
 
+admin.site.register(Dataset, DatasetAdmin)
 
 class SpeciesAdmin(admin.ModelAdmin):
     pass
 
+
 admin.site.register(Species, SpeciesAdmin)
+
+class AreaAdmin(admin.OSMGeoAdmin):
+    pass
+
+
+admin.site.register(Area, AreaAdmin)
