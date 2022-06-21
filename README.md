@@ -22,7 +22,9 @@ This project can be deployed as a classic Django project, without Docker(-compos
 
 1) Copy `mica/settings_local.template.py` to `mica/settings_local.py` and customize your local settings there.
 
+# After upgrading requirements.txt
 
+$ docker-compose up --build
 
 # TODO:
 - Occurrence table: add link to GBIF (dataset, occurrence)

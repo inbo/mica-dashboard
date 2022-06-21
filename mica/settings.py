@@ -22,46 +22,47 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'django.contrib.gis',
-
-    'dashboard'
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "django.contrib.gis",
+    "maintenance_mode",
+    "dashboard",
 ]
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "maintenance_mode.middleware.MaintenanceModeMiddleware",
 ]
 
-ROOT_URLCONF = 'mica.urls'
+ROOT_URLCONF = "mica.urls"
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
             ],
         },
     },
 ]
 
-WSGI_APPLICATION = 'mica.wsgi.application'
+WSGI_APPLICATION = "mica.wsgi.application"
 
 
 # Password validation
@@ -69,16 +70,16 @@ WSGI_APPLICATION = 'mica.wsgi.application'
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
 
@@ -86,9 +87,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/3.1/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = "UTC"
 
 USE_I18N = True
 
@@ -100,30 +101,23 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
-STATIC_URL = '/static/'
+STATIC_URL = "/static/"
 
 CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'unique-snowflake',
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "unique-snowflake",
     }
 }
 
-DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 
-DATASET_CONFIG = (
-    {'gbif_id': 'b7ee2a4d-8e10-410f-a951-a7f032678ffe', 'name': 'Muskrat captures in Flanders, Belgium', 'catches': True },
-    {'gbif_id': '95b0e787-8508-4247-9e48-18b45fc7d12e', 'name': 'MICA - Muskrat occurrences collected by RATO in East Flanders, Belgium', 'catches': True},
-    {'gbif_id': '45f54678-54ac-4468-8aac-bc83722fc768', 'name': 'MICA - Muskrat and Coypu occurrences collected by UVW in the Netherlands', 'catches': True},
-    {'gbif_id': '3634aee3-41d5-4aa2-8cb5-875859f62a3a', 'name': 'MICA - Muskrat occurrences collected by VMM in Flanders, Belgium', 'catches': True},
-    {'gbif_id': '8a5cbaec-2839-4471-9e1d-98df301095dd', 'name': 'MICA - Muskrat and coypu camera trap observations in Belgium, the Netherlands and Germany', 'catches': False},
-    {'gbif_id': '9a0b66df-7535-4f28-9f4e-5bc11b8b096c', 'name': 'Waarnemingen.be - Non-native animal occurrences in Flanders and the Brussels Capital Region, Belgium', 'catches': False},
-    {'gbif_id': '629befd5-fb45-4365-95c4-d07e72479b37', 'name': 'Observations.be - Non-native species occurrences in Wallonia, Belgium', 'catches': False},
-)
 
+GBIF_COUNTRIES_TO_IMPORT = ["BE", "DE", "NL"]
 GBIF_TAXA_IDS_TO_IMPORT = [5219858, 4264680]  # We only import those species
+GBIF_CATCHES_DATASET_KEY = []
 
 # A (writable by Django) directory where GBIF datasets are temporarily stored before their ingestion
-DATASET_TEMPORARY_DIR = os.path.join(BASE_DIR, 'initial_datasets_temp')
+DATASET_TEMPORARY_DIR = os.path.join(BASE_DIR, "initial_datasets_temp")
 
 from .settings_local import *
