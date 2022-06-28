@@ -139,3 +139,4 @@ cython_debug/
 
 .idea
 /mica/settings_local.py
+/mica/maintenance_mode_state.txt
