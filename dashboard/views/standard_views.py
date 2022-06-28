@@ -4,13 +4,16 @@ from django.db.models import Max, Min
 from django.http import JsonResponse, HttpRequest, HttpResponse
 from django.shortcuts import render, get_object_or_404
 
-from dashboard.models import Dataset, Species, Area
+from dashboard.models import Dataset, Species, Area, DataImport
 
 from dashboard.views.helpers import request_to_occurrences_qs, extract_int_request
 
 
 def index(request):
-    return render(request, "dashboard/index.html")
+    latest_data_import = DataImport.objects.order_by("-start").first()
+    return render(
+        request, "dashboard/index.html", {"latest_data_import": latest_data_import}
+    )
 
 
 def available_datasets(request):
@@ -24,9 +27,9 @@ def available_species(request):
 
 
 def occurrences_json(request):
-    order = request.GET.get('order')
-    limit = extract_int_request(request, 'limit')
-    page_number = extract_int_request(request, 'page_number')
+    order = request.GET.get("order")
+    limit = extract_int_request(request, "limit")
+    page_number = extract_int_request(request, "page_number")
 
     occurrences = request_to_occurrences_qs(request).order_by(order)
 
@@ -35,10 +38,14 @@ def occurrences_json(request):
     page = paginator.get_page(page_number)
     occurrences_dicts = [occ.as_dict() for occ in page.object_list]
 
-    return JsonResponse({'results': occurrences_dicts,
-                         'firstPage': page.paginator.page_range.start,
-                         'lastPage': page.paginator.page_range.stop,
-                         'totalResultsCount': page.paginator.count})
+    return JsonResponse(
+        {
+            "results": occurrences_dicts,
+            "firstPage": page.paginator.page_range.start,
+            "lastPage": page.paginator.page_range.stop,
+            "totalResultsCount": page.paginator.count,
+        }
+    )
 
 
 def occurrences_counter(request):
@@ -47,7 +54,7 @@ def occurrences_counter(request):
     filters: same format than other endpoints: getting occurrences, map tiles, ...
     """
     qs = request_to_occurrences_qs(request)
-    return JsonResponse({'count': qs.count()})
+    return JsonResponse({"count": qs.count()})
 
 
 def occurrences_date_range(request):
@@ -57,9 +64,9 @@ def occurrences_date_range(request):
     """
 
     qs = request_to_occurrences_qs(request)
-    qs = qs.aggregate(Max('date'), Min('date'))
+    qs = qs.aggregate(Max("date"), Min("date"))
 
-    return JsonResponse({'min': qs['date__min'], 'max': qs['date__max']})
+    return JsonResponse({"min": qs["date__min"], "max": qs["date__max"]})
 
 
 def area_geojson(_: HttpRequest, id: int):
