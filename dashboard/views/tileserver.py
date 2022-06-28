@@ -12,8 +12,8 @@ OCCURRENCES_TABLE_NAME = Occurrence.objects.model._meta.db_table
 OCCURRENCES_FIELD_NAME_POINT = "location"
 
 # ! Make sure the following formats are in sync
-DB_DATE_EXCHANGE_FORMAT_PYTHON = '%Y-%m-%d'  # To be passed to strftime()
-DB_DATE_EXCHANGE_FORMAT_POSTGRES = 'YYYY-MM-DD'  # To be used in SQL queries
+DB_DATE_EXCHANGE_FORMAT_PYTHON = "%Y-%m-%d"  # To be passed to strftime()
+DB_DATE_EXCHANGE_FORMAT_POSTGRES = "YYYY-MM-DD"  # To be used in SQL queries
 
 # Hexagon size (in meters) according to the zoom level. Adjust ZOOM_TO_HEX_SIZE_MULTIPLIER to simultaneously configure
 # all zoom levels
@@ -38,12 +38,16 @@ ZOOM_TO_HEX_SIZE_BASELINE = {
     16: 10
     # TODO: show individual occurrences for levels > 13?
 }
-ZOOM_TO_HEX_SIZE = {key: value * ZOOM_TO_HEX_SIZE_MULTIPLIER for key, value in ZOOM_TO_HEX_SIZE_BASELINE.items()}
+ZOOM_TO_HEX_SIZE = {
+    key: value * ZOOM_TO_HEX_SIZE_MULTIPLIER
+    for key, value in ZOOM_TO_HEX_SIZE_BASELINE.items()
+}
 
 # !! IMPORTANT !! Make sure the occurrence filtering here is equivalent to what's done in
 # views.helpers.request_to_occurrences_qs Otherwise, occurrences returned on the map and on other
 # components (table, ...) will be inconsistent.
-JINJASQL_FRAGMENT_FILTER_OCCURRENCES = Template("""
+JINJASQL_FRAGMENT_FILTER_OCCURRENCES = Template(
+    """
     SELECT * FROM $occurrences_table_name as occ
     WHERE (
         1 = 1
@@ -59,10 +63,21 @@ JINJASQL_FRAGMENT_FILTER_OCCURRENCES = Template("""
         {% if end_date %}
             AND occ.date <= TO_DATE({{ end_date }}, '$date_format')
         {% endif %}
+        {% if records_type == "catches" %}
+            AND occ.is_catch 
+        {% endif %}
+        {% if records_type == "observations" %}
+            AND NOT occ.is_catch 
+        {% endif %}
     )
-""").substitute(occurrences_table_name=OCCURRENCES_TABLE_NAME, date_format=DB_DATE_EXCHANGE_FORMAT_POSTGRES)
+"""
+).substitute(
+    occurrences_table_name=OCCURRENCES_TABLE_NAME,
+    date_format=DB_DATE_EXCHANGE_FORMAT_POSTGRES,
+)
 
-JINJASQL_FRAGMENT_AGGREGATED_GRID = Template("""
+JINJASQL_FRAGMENT_AGGREGATED_GRID = Template(
+    """
     SELECT COUNT(*), hexes.geom
                     FROM
                         ST_HexagonGrid(
@@ -78,9 +93,12 @@ JINJASQL_FRAGMENT_AGGREGATED_GRID = Template("""
 
                     ON ST_Intersects(dashboard_filtered_occ.$occurrences_field_name_point, hexes.geom)
                     GROUP BY hexes.geom
-""").substitute(occurrences_table_name=OCCURRENCES_TABLE_NAME,
-                occurrences_field_name_point=OCCURRENCES_FIELD_NAME_POINT,
-                jinjasql_fragment_filter_occurrences=JINJASQL_FRAGMENT_FILTER_OCCURRENCES)
+"""
+).substitute(
+    occurrences_table_name=OCCURRENCES_TABLE_NAME,
+    occurrences_field_name_point=OCCURRENCES_FIELD_NAME_POINT,
+    jinjasql_fragment_filter_occurrences=JINJASQL_FRAGMENT_FILTER_OCCURRENCES,
+)
 
 
 def occurrence_min_max_in_hex_grid(request):
@@ -88,19 +106,28 @@ def occurrence_min_max_in_hex_grid(request):
 
     This can be useful to dynamically color the grid according to the occurrence count
     """
-    zoom = extract_int_request(request, 'zoom')
-    dataset_id, species_id, start_date, end_date = filters_from_request(request)
+    zoom = extract_int_request(request, "zoom")
+    dataset_id, species_id, start_date, end_date, records_type = filters_from_request(
+        request
+    )
 
-    sql_template = readable_string(Template("""
+    sql_template = readable_string(
+        Template(
+            """
     WITH grid AS ($jinjasql_fragment_aggregated_grid)
     SELECT MIN(count), MAX(count) FROM grid;
-    """).substitute(jinjasql_fragment_aggregated_grid=JINJASQL_FRAGMENT_AGGREGATED_GRID))
+    """
+        ).substitute(
+            jinjasql_fragment_aggregated_grid=JINJASQL_FRAGMENT_AGGREGATED_GRID
+        )
+    )
 
     sql_params = {
         "hex_size_meters": ZOOM_TO_HEX_SIZE[zoom],
         "grid_extent_viewport": False,
         "dataset_id": dataset_id,
         "species_id": species_id,
+        "records_type": records_type,
     }
 
     if start_date:
@@ -113,40 +140,50 @@ def occurrence_min_max_in_hex_grid(request):
     with connection.cursor() as cursor:
         cursor.execute(query, bind_params)
         r = cursor.fetchone()
-        return JsonResponse({'min': r[0], 'max': r[1]})
+        return JsonResponse({"min": r[0], "max": r[1]})
 
 
 def mvt_tiles_hex_aggregated_occurrence(request, zoom, x, y):
     """Tile server, showing occurrences aggregated by hexagon squares. Filters are honoured."""
-    dataset_id, species_id, start_date, end_date = filters_from_request(request)
+    dataset_id, species_id, start_date, end_date, records_type = filters_from_request(
+        request
+    )
 
-    sql_template = readable_string(Template("""
+    sql_template = readable_string(
+        Template(
+            """
         WITH grid AS ($jinjasql_fragment_aggregated_grid),
              mvtgeom AS (SELECT ST_AsMVTGeom(geom, ST_TileEnvelope({{ zoom }}, {{ x }}, {{ y }})) AS geom, count FROM grid)
         SELECT st_asmvt(mvtgeom.*) FROM mvtgeom;
-    """).substitute(jinjasql_fragment_aggregated_grid=JINJASQL_FRAGMENT_AGGREGATED_GRID))
+    """
+        ).substitute(
+            jinjasql_fragment_aggregated_grid=JINJASQL_FRAGMENT_AGGREGATED_GRID
+        )
+    )
 
     sql_params = {
         "hex_size_meters": ZOOM_TO_HEX_SIZE[zoom],
         "grid_extent_viewport": True,
-
         "dataset_id": dataset_id,
         "species_id": species_id,
         "start_date": start_date.strftime(DB_DATE_EXCHANGE_FORMAT_PYTHON),
         "end_date": end_date.strftime(DB_DATE_EXCHANGE_FORMAT_PYTHON),
-
+        "records_type": records_type,
         "zoom": zoom,
         "x": x,
-        "y": y
+        "y": y,
     }
 
-    return HttpResponse(_mvt_query_data(sql_template, sql_params), content_type='application/vnd.mapbox-vector-tile')
+    return HttpResponse(
+        _mvt_query_data(sql_template, sql_params),
+        content_type="application/vnd.mapbox-vector-tile",
+    )
 
 
 def _mvt_query_data(sql_template, sql_params):
     """Return binary data for the SQL query defined by sql_template and sql_params.
 
-    Only for queries that returns a binary MVT (i.e. starts with "ST_AsMVT") """
+    Only for queries that returns a binary MVT (i.e. starts with "ST_AsMVT")"""
     j = JinjaSql()
     query, bind_params = j.prepare_query(sql_template, sql_params)
 
@@ -155,5 +192,5 @@ def _mvt_query_data(sql_template, sql_params):
         if cursor.rowcount != 0:
             data = cursor.fetchone()[0].tobytes()
         else:
-            data = ''
+            data = ""
         return data

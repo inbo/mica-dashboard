@@ -1,3 +1,11 @@
+function truncateString(str, num) {
+  if (str.length > num) {
+    return str.slice(0, num) + "...";
+  } else {
+    return str;
+  }
+}
+
 Vue.component('dashboard-occurrence-counter', {
     props: {
         'filters': Object,
@@ -42,14 +50,25 @@ Vue.component('occurrence-table-page', {
             }
         }
     },
+    computed: {
+        preparedOccurrences: function () {
+            // The occurrences, but formatted for display
+            return this.occurrences.map(o => ({...o, ...{
+                shortDatasetName: truncateString(o.datasetName, 20),
+                shortSpeciesName: o.speciesName.replace(/\([^\)\(]*\)/, ""), // Remove authorship (between parentheses)
+                recordType: o.isCatch ? "catch" : "observation"
+            }}))
+        }
+    },
     template: `<tbody>
-                 <tr v-for="occ in occurrences">
+                 <tr v-for="occ in preparedOccurrences">
                     <th scope="row">{{ occ.id }}</th>
                     <td>{{ occ.lat }}</td>
                     <td>{{ occ.lon }}</td>
                     <td>{{ occ.date }}</td>
-                    <td>{{ occ.speciesName }}</td>
-                    <td>{{ occ.datasetName }}</td>
+                    <td><i>{{ occ.shortSpeciesName }}</i></td>
+                    <td>{{ occ.shortDatasetName }}</td>
+                    <to>{{ occ.recordType }}</to>
                  </tr>
                </tbody>`
 });
@@ -108,7 +127,7 @@ Vue.component('dashboard-table', {
             currentPage: 1,
             firstPage: null,
             lastPage: null,
-            pageSize: 10,
+            pageSize: 20,
             totalOccurrencesCount: null,
             sortBy: 'id',
             occurrences: [],
@@ -120,7 +139,8 @@ Vue.component('dashboard-table', {
                 {'sortId': null, 'label': 'Lon',},
                 {'sortId': null, 'label': 'Date',},
                 {'sortId': 'species__name', 'label': 'Species',},
-                {'sortId': 'source_dataset__name', 'label': 'Dataset',}
+                {'sortId': 'source_dataset__name', 'label': 'Dataset',},
+                {'sortId': null, 'label': 'Type',}
             ]
         }
     },

@@ -5,7 +5,7 @@ DATA_SRID = 3857
 
 
 class Species(models.Model):
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, db_index=True)
 
     def __str__(self):
         return self.name
@@ -31,11 +31,8 @@ class DataImport(models.Model):
 
 
 class Dataset(models.Model):
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, db_index=True)
     gbif_id = models.CharField(max_length=255, unique=True)
-
-    # Some datasets contains catches, other contains observations. The distinction is currently made at the dataset level
-    contains_catches = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name
@@ -45,7 +42,7 @@ class Dataset(models.Model):
 
 
 class Occurrence(models.Model):
-    gbif_id = models.CharField(max_length=255, unique=True)
+    gbif_id = models.CharField(max_length=255)
     species = models.ForeignKey(Species, on_delete=models.PROTECT)
     source_dataset = models.ForeignKey(
         Dataset, on_delete=models.CASCADE
@@ -56,11 +53,13 @@ class Occurrence(models.Model):
     municipality = models.CharField(max_length=255, blank=True)
     coordinates_uncertainty = models.FloatField(blank=True, null=True)  # in meters
     georeference_remarks = models.TextField(blank=True)
+    is_catch = models.BooleanField()
 
     data_import = models.ForeignKey(DataImport, on_delete=models.PROTECT)
 
     class Meta:
         indexes = [models.Index(fields=["date"])]
+        unique_together = ("gbif_id", "data_import")
 
     def as_dict(self):
         lon, lat = self.location.transform(4326, clone=True).coords
@@ -72,6 +71,7 @@ class Occurrence(models.Model):
             "speciesName": self.species.name,
             "datasetName": self.source_dataset.name,
             "date": str(self.date),
+            "isCatch": self.is_catch,
         }
 
 

@@ -67,6 +67,16 @@
                         </select>
                     </div>
 
+                    <div class="form-group row">
+                        <label class="col-sm-6 col-form-label col-form-label-sm" for="selectedSpecies">Catches or observations?</label>
+                        <select class="col-sm-5 form-control form-control-sm" id="selectedSpecies"
+                                v-model="selectedFilters.recordsType">
+                            <option :value="null">Both</option>
+                            <option value="catches">Catches</option>
+                            <option value="observations">Observations</option>
+                        </select>
+                    </div>
+
                     <div class="form-group">
                         <label class="col-form-label col-form-label-sm" for="startDate">Start date</label>
                         <input class="form-control form-control-sm" type="date" id="startDate"
@@ -143,6 +153,7 @@
                             speciesId: null,
                             startDate: null,
                             endDate: null,
+                            recordsType: null, // null | catches | observations
                         },
 
                         endpoints: {

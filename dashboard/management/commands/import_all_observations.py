@@ -58,12 +58,7 @@ def import_single_occurrence(row: CoreRow, current_data_import: DataImport):
 
         dataset, _ = Dataset.objects.get_or_create(
             gbif_id=gbif_dataset_key,
-            defaults={
-                "name": gbif_dataset_name,
-                "contains_catches": (
-                    gbif_dataset_key in settings.GBIF_CATCHES_DATASET_KEY
-                ),
-            },
+            defaults={"name": gbif_dataset_name},
         )
 
         try:
@@ -96,6 +91,11 @@ def import_single_occurrence(row: CoreRow, current_data_import: DataImport):
         except ValueError:
             cu = None
 
+        dataset_contains_only_catches = (
+            dataset.gbif_id in settings.GBIF_CATCHES_DATASET_KEY
+        )
+        record_flagged_as_catch = row.data[qn("samplingProtocol")] == "rat trap"
+
         Occurrence.objects.create(
             gbif_id=int(row.data["http://rs.gbif.org/terms/1.0/gbifID"]),
             species=species,
@@ -107,6 +107,7 @@ def import_single_occurrence(row: CoreRow, current_data_import: DataImport):
             municipality=row.data[qn("municipality")],
             georeference_remarks=row.data[qn("georeferenceRemarks")],
             data_import=current_data_import,
+            is_catch=(dataset_contains_only_catches or record_flagged_as_catch),
         )
 
 
