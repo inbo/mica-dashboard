@@ -5,3 +5,4 @@ Jinja2==3.0.3
 jinjasql==0.1.8
 gbif-blocking-occurrence-download==0.1.1
 django-maintenance-mode==0.16.2
+django-debug-toolbar==3.5.0

@@ -119,5 +119,3 @@ GBIF_CATCHES_DATASET_KEY = []
 
 # A (writable by Django) directory where GBIF datasets are temporarily stored before their ingestion
 DATASET_TEMPORARY_DIR = os.path.join(BASE_DIR, "initial_datasets_temp")
-
-from .settings_local import *
