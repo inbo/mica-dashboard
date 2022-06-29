@@ -62,17 +62,20 @@ class Occurrence(models.Model):
         unique_together = ("gbif_id", "data_import")
 
     def as_dict(self):
-        lon, lat = self.location.transform(4326, clone=True).coords
-
-        return {
+        d = {
             "id": self.pk,
-            "lat": str(lat)[:6],
-            "lon": str(lon)[:6],
             "speciesName": self.species.name,
             "datasetName": self.source_dataset.name,
             "date": str(self.date),
             "isCatch": self.is_catch,
         }
+
+        if self.location:
+            lon, lat = self.location.transform(4326, clone=True).coords
+            d["lat"] = str(lat)[:6]
+            d["lon"] = str(lon)[:6]
+
+        return d
 
 
 class Area(models.Model):
