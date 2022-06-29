@@ -15,6 +15,7 @@ from dwca.darwincore.utils import qualname as qn
 from gbif_blocking_occurrences_download import download_occurrences as download_gbif_occurrences  # type: ignore
 from maintenance_mode.core import set_maintenance_mode
 
+from dashboard.management.commands._helpers import get_dataset_name_from_gbif_api
 from dashboard.models import DataImport, Occurrence, Species, Dataset
 
 
@@ -66,6 +67,10 @@ def import_single_occurrence(row: CoreRow, current_data_import: DataImport):
 
         gbif_dataset_key = row.data["http://rs.gbif.org/terms/1.0/datasetKey"]
         gbif_dataset_name = row.data[qn("datasetName")]
+
+        # Ugly hack necessary to circumvent a GBIF bug (missing dataset names in Downloads).
+        if gbif_dataset_name == "":
+            gbif_dataset_name = get_dataset_name_from_gbif_api(gbif_dataset_key)
 
         dataset, _ = Dataset.objects.get_or_create(
             gbif_id=gbif_dataset_key,
