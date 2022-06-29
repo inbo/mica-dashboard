@@ -214,25 +214,24 @@ Vue.component('dashboard-map', {
         },
         HexMinOccCount: {
             handler: function (val) {
-                this.replaceVectorTilesLayer();
+                this.restyleVectorTilesLayer();
             },
         },
         HexMaxOccCount: {
             handler: function (val) {
-                this.replaceVectorTilesLayer();
+                this.restyleVectorTilesLayer();
             },
         },
         showCounters: {
             handler: function () {
-                if (this.vectorTilesLayer) {
-                    this.vectorTilesLayer.setStyle(this.vectorTilesLayerStyleFunction)
-                }
+                this.restyleVectorTilesLayer();
             },
         },
         filters: {
             deep: true,
             handler: function (val) {
                 this.loadOccMinMax(this.initialZoom, this.filters);
+                this.replaceVectorTilesLayer()
             },
         }
 
@@ -270,10 +269,16 @@ Vue.component('dashboard-map', {
         }
     },
     methods: {
+        restyleVectorTilesLayer: function () {
+            if (this.vectorTilesLayer) {
+                this.vectorTilesLayer.setStyle(this.vectorTilesLayerStyleFunction)
+            }
+        },
         replaceVectorTilesLayer: function () {
             if (this.vectorTilesLayer) {
                 this.removeVectorTilesLayer();
             }
+            this.loadOccMinMax(this.initialZoom, this.filters);
             this.map.addLayer(this.createVectorTilesLayer());
         },
         removeVectorTilesLayer: function () {
@@ -364,7 +369,6 @@ Vue.component('dashboard-map', {
         }
     },
     mounted() {
-        this.loadOccMinMax(this.initialZoom, this.filters);
         this.map = this.createBaseMap();
         this.map.setTarget(this.$refs['map-root']); // Assign the map to div and display
     },
