@@ -110,7 +110,7 @@ CACHES = {
     }
 }
 
-DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
 GBIF_COUNTRIES_TO_IMPORT = ["BE", "DE", "NL"]
