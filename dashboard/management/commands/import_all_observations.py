@@ -46,11 +46,22 @@ def import_single_occurrence(row: CoreRow, current_data_import: DataImport):
     except ValueError:
         year = None
 
+    # individualCount is not always present - default to 1
+    try:
+        ic = int(row.data[qn("individualCount")])
+    except ValueError:
+        ic = 1
+
+    proceed_with_import = False
     if (
         int(row.data["http://rs.gbif.org/terms/1.0/acceptedTaxonKey"])
         in settings.GBIF_TAXA_IDS_TO_IMPORT
         and year is not None
+        and ic > 0
     ):
+        proceed_with_import = True
+
+    if proceed_with_import:
         species, _ = Species.objects.get_or_create(name=row.data[qn("scientificName")])
 
         gbif_dataset_key = row.data["http://rs.gbif.org/terms/1.0/datasetKey"]
@@ -78,12 +89,6 @@ def import_single_occurrence(row: CoreRow, current_data_import: DataImport):
             month = 1
             day = 1
         date = datetime.date(year, month, day)
-
-        # individualCount is not always present - default to 1
-        try:
-            ic = int(row.data[qn("individualCount")])
-        except ValueError:
-            ic = 1
 
         # coordinates uncertainty not always present
         try:
