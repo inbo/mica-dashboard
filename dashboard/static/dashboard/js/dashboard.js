@@ -68,7 +68,7 @@ Vue.component('occurrence-table-page', {
                     <td>{{ occ.date }}</td>
                     <td><i>{{ occ.shortSpeciesName }}</i></td>
                     <td>{{ occ.shortDatasetName }}</td>
-                    <to>{{ occ.recordType }}</to>
+                    <td>{{ occ.recordType }}</td>
                  </tr>
                </tbody>`
 });
@@ -314,7 +314,7 @@ Vue.component('dashboard-map', {
         },
         createBaseMap: function () {
             const baseLayer = new ol.layer.Tile({
-                source: new ol.source.OSM({url: "http://a.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"}),
+                source: new ol.source.OSM({url: "https://a.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"}),
                 zIndex: 1
             })
 
