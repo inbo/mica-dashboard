@@ -56,13 +56,16 @@ Vue.component('occurrence-table-page', {
             return this.occurrences.map(o => ({...o, ...{
                 shortDatasetName: truncateString(o.datasetName, 20),
                 shortSpeciesName: o.speciesName.replace(/\([^\)\(]*\)/, ""), // Remove authorship (between parentheses)
-                recordType: o.isCatch ? "catch" : "observation"
+                recordType: o.isCatch ? "catch" : "observation",
+                occurrenceGbifUrl: "https://www.gbif.org/occurrence/" + o.gbifId,
             }}))
         }
     },
     template: `<tbody>
                  <tr v-for="occ in preparedOccurrences">
-                    <th scope="row">{{ occ.id }}</th>
+                    <th scope="row">
+                        <a :href="occ.occurrenceGbifUrl" target="_blank">{{ occ.gbifId }}</a>
+                    </th>
                     <td>{{ occ.lat }}</td>
                     <td>{{ occ.lon }}</td>
                     <td>{{ occ.date }}</td>
@@ -134,7 +137,7 @@ Vue.component('dashboard-table', {
 
             cols: [
                 // sortId: must match django QS filter (null = non-sortable), label: displayed in header
-                {'sortId': 'id', 'label': '#',},
+                {'sortId': 'gbif_id', 'label': 'GBIF id',},
                 {'sortId': null, 'label': 'Lat',},
                 {'sortId': null, 'label': 'Lon',},
                 {'sortId': null, 'label': 'Date',},

@@ -64,6 +64,7 @@ class Occurrence(models.Model):
     def as_dict(self):
         d = {
             "id": self.pk,
+            "gbifId": self.gbif_id,
             "speciesName": self.species.name,
             "datasetName": self.source_dataset.name,
             "date": str(self.date),
