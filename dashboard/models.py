@@ -67,6 +67,7 @@ class Occurrence(models.Model):
             "gbifId": self.gbif_id,
             "speciesName": self.species.name,
             "datasetName": self.source_dataset.name,
+            "datasetKey": self.source_dataset.gbif_id,
             "date": str(self.date),
             "isCatch": self.is_catch,
         }

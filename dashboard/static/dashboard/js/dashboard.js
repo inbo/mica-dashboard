@@ -58,6 +58,7 @@ Vue.component('occurrence-table-page', {
                 shortSpeciesName: o.speciesName.replace(/\([^\)\(]*\)/, ""), // Remove authorship (between parentheses)
                 recordType: o.isCatch ? "catch" : "observation",
                 occurrenceGbifUrl: "https://www.gbif.org/occurrence/" + o.gbifId,
+                datasetGbifUrl: "https://www.gbif.org/dataset/" + o.datasetKey,
             }}))
         }
     },
@@ -70,7 +71,9 @@ Vue.component('occurrence-table-page', {
                     <td>{{ occ.lon }}</td>
                     <td>{{ occ.date }}</td>
                     <td><i>{{ occ.shortSpeciesName }}</i></td>
-                    <td>{{ occ.shortDatasetName }}</td>
+                    <td>
+                        <a :href="occ.datasetGbifUrl" target="_blank">{{ occ.shortDatasetName }}</a> 
+                    </td>
                     <td>{{ occ.recordType }}</td>
                  </tr>
                </tbody>`
