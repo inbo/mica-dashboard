@@ -157,6 +157,12 @@ Vue.component('dashboard-table', {
         hasNextPage: function () {
             return (this.currentPage < this.lastPage);
         },
+        isOnLastPAge: function () {
+            return (this.currentPage === this.lastPage);
+        },
+        isOnFirstPage: function () {
+            return (this.currentPage === this.firstPage);
+        }
     },
     template: `<div id="table-outer">
                     <table class="table table-striped table-sm">
@@ -169,10 +175,12 @@ Vue.component('dashboard-table', {
                         </thead>                 
                         <occurrence-table-page :occurrences="occurrences"></occurrence-table-page>
                     </table>
-                    <p class="text-center"> 
+                    <p class="text-center">
+                        <button type="button" :disabled="isOnFirstPage" class="btn btn-outline-primary btn-sm" @click="currentPage = firstPage">First</button> 
                         <button type="button" :disabled="!hasPreviousPage" class="btn btn-outline-primary btn-sm" @click="currentPage -= 1">Previous</button>
                         Page {{ currentPage }} / {{ lastPage }}
                         <button type="button" :disabled="!hasNextPage" class="btn btn-outline-primary btn-sm" @click="currentPage += 1">Next</button>
+                        <button type="button" :disabled="isOnLastPage" class="btn btn-outline-primary btn-sm" @click="currentPage = lastPage">Last</button>
                     </p>
                </div>`
 });
