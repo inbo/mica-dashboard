@@ -143,7 +143,7 @@ Vue.component('dashboard-table', {
                 {'sortId': 'gbif_id', 'label': 'GBIF id',},
                 {'sortId': null, 'label': 'Lat',},
                 {'sortId': null, 'label': 'Lon',},
-                {'sortId': null, 'label': 'Date',},
+                {'sortId': '-date', 'label': 'Date',},
                 {'sortId': 'species__name', 'label': 'Species',},
                 {'sortId': 'source_dataset__name', 'label': 'Dataset',},
                 {'sortId': null, 'label': 'Type',}
