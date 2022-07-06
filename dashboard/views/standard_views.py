@@ -57,18 +57,6 @@ def occurrences_counter(request):
     return JsonResponse({"count": qs.count()})
 
 
-def occurrences_date_range(request):
-    """Returns the earliest and latest date for occurrences
-
-    Same filters than other endpoints
-    """
-
-    qs = request_to_occurrences_qs(request)
-    qs = qs.aggregate(Max("date"), Min("date"))
-
-    return JsonResponse({"min": qs["date__min"], "max": qs["date__max"]})
-
-
 def area_geojson(_: HttpRequest, id: int):
     """Return a specific area as GeoJSON"""
     area = get_object_or_404(Area, pk=id)

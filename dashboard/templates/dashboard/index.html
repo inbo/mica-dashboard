@@ -84,13 +84,13 @@
                     <div class="form-group">
                         <label class="col-form-label col-form-label-sm" for="startDate">Start date</label>
                         <input class="form-control form-control-sm" type="date" id="startDate"
-                               v-model="selectedFilters.startDate" :min="availableOccurrencesDateRange.min">
+                               v-model="selectedFilters.startDate">
                     </div>
 
                     <div class="form-group">
                         <label class="col-form-label col-form-label-sm" for="endDate">End date</label>
                         <input class="form-control form-control-sm" type="date" id="endDate"
-                               v-model="selectedFilters.endDate" :max="availableOccurrencesDateRange.min">
+                               v-model="selectedFilters.endDate">
                     </div>
 
                     <h4 class="my-3 text-center">Map style</h4>
@@ -155,8 +155,8 @@
                         selectedFilters: {
                             datasetId: null,
                             speciesId: null,
-                            startDate: null,
-                            endDate: null,
+                            startDate: this.firstDayInPreviousMonth().toISOString().substring(0,10),
+                            endDate: this.lastDayInPreviousMonth().toISOString().substring(0,10),
                             recordsType: null, // null | catches | observations
                         },
 
@@ -168,17 +168,12 @@
                             minMaxOccCountUrl: "{% url 'dashboard-api-min-max-in-grid' %}",
                             counterUrl: "{% url 'dashboard-api-occurrences-counter' %}",
                             occurrencesJsonUrl: "{% url 'dashboard-api-occurrences-json' %}",
-                            occurrencesDateRangeUrl: "{% url 'dashboard-api-occurrences-date-range' %}",
                             tileServerUrlTemplate: "{% url 'dashboard-api-mvt-tiles' zoom=1 x=2 y=3%}".replace('1', '{z}').replace('2', '{x}').replace('3', '{y}')
                         },
 
                         availableDatasets: [],
                         availableSpecies: [],
                         availableOverlays: [],
-                        availableOccurrencesDateRange: {
-                            min: null,
-                            max: null
-                        },
 
                         showHexagonCounters: true,
                         initialZoomLevel: 7,
@@ -191,38 +186,17 @@
                     this.populateSpeciesSelect();
                     this.populateOverlaysSelect();
                 },
-
-                watch: {
-                    'selectedFilters.datasetId': {
-                        immediate: true,
-                        handler: function () {
-                            this.populateDateRange({
-                                datasetId: this.selectedFilters.datasetId,
-                                speciesId: this.selectedFilters.speciesId
-                            });
-                        },
-                    },
-                    'selectedFilters.speciesId': {
-                        immediate: true,
-                        handler: function () {
-                            this.populateDateRange({
-                                datasetId: this.selectedFilters.datasetId,
-                                speciesId: this.selectedFilters.speciesId
-                            });
-                        },
-                    },
-                },
                 methods: {
-                    populateDateRange: function (filters) {
-                        var vm = this;
-                        $.ajax({
-                            url: this.endpoints.occurrencesDateRangeUrl,
-                            data: filters
-                        }).done(function (data) {
-                            vm.availableOccurrencesDateRange = data;
-                            vm.selectedFilters.startDate = data.min;
-                            vm.selectedFilters.endDate = data.max;
-                        })
+                    firstDayInPreviousMonth() {
+                        const date = new Date();
+                        date.setDate(1);
+                        date.setMonth(date.getMonth() - 1);
+                        return date;
+                    },
+                    lastDayInPreviousMonth() {
+                        const date = new Date();
+                        date.setDate(0);
+                        return date;
                     },
                     populateSpeciesSelect: function () {
                         var vm = this;

@@ -157,7 +157,7 @@ Vue.component('dashboard-table', {
         hasNextPage: function () {
             return (this.currentPage < this.lastPage);
         },
-        isOnLastPAge: function () {
+        isOnLastPage: function () {
             return (this.currentPage === this.lastPage);
         },
         isOnFirstPage: function () {
@@ -385,6 +385,7 @@ Vue.component('dashboard-map', {
     mounted() {
         this.map = this.createBaseMap();
         this.map.setTarget(this.$refs['map-root']); // Assign the map to div and display
+        this.replaceVectorTilesLayer();
     },
     template: '<div id="map" class="map" ref="map-root" style="height: 500px; width: 100%;"></div>'
 })
