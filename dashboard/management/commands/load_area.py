@@ -12,6 +12,10 @@ SOURCE_DIRECTORY = os.path.join(THIS_DIR, "../../../source_data/areas")
 
 LAYER_MAPPING_CONFIGURATION = {  # key: filename / value: mapping
     "LIVE_MICA_shp/LIVE_MICA.shp": {"name": "Name", "mpoly": "POLYGON"},
+    "all_mica_areas_merged/all_mica_areas_merged.shp": {
+        "name": "Name",
+        "mpoly": "POLYGON",
+    },
 }
 
 
