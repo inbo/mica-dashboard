@@ -63,7 +63,9 @@ def import_single_occurrence(row: CoreRow, current_data_import: DataImport):
         proceed_with_import = True
 
     if proceed_with_import:
-        species, _ = Species.objects.get_or_create(name=row.data[qn("scientificName")])
+        species, _ = Species.objects.get_or_create(
+            name=row.data["http://rs.gbif.org/terms/1.0/acceptedScientificName"]
+        )
 
         gbif_dataset_key = row.data["http://rs.gbif.org/terms/1.0/datasetKey"]
         gbif_dataset_name = row.data[qn("datasetName")]
@@ -197,6 +199,9 @@ class Command(BaseCommand):
 
             # 4. Remove previous observations
             Occurrence.objects.exclude(data_import=current_data_import).delete()
+
+            # 5. Remove unused species entries
+            Species.objects.filter(occurrence__isnull=True).delete()
 
             # 4. Finalize the DataImport object
             self.stdout.write("Updating the DataImport object")
