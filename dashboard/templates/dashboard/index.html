@@ -85,7 +85,7 @@
                         <label class="col-sm-6 col-form-label col-form-label-sm" for="selectedOverlay">MICA area</label>
                         <select class="col-sm-5 form-control form-control-sm" id="selectedOverlay"
                                 v-model="selectedOverlayId">
-                            <option :value="null">-- None --</option>
+                            <option :value="null">-- Everywhere --</option>
                             <option v-for="overlay in availableOverlays" :key="overlay.id" :value="overlay.id">[[
                                 overlay.name ]]
                             </option>
