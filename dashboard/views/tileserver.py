@@ -188,13 +188,16 @@ def mvt_tiles_hex_aggregated_occurrence(request, zoom, x, y):
         "dataset_id": dataset_id,
         "species_id": species_id,
         "area_ids": area_ids,
-        "start_date": start_date.strftime(DB_DATE_EXCHANGE_FORMAT_PYTHON),
-        "end_date": end_date.strftime(DB_DATE_EXCHANGE_FORMAT_PYTHON),
         "records_type": records_type,
         "zoom": zoom,
         "x": x,
         "y": y,
     }
+
+    if start_date:
+        sql_params["start_date"] = start_date.strftime(DB_DATE_EXCHANGE_FORMAT_PYTHON)
+    if end_date:
+        sql_params["end_date"] = end_date.strftime(DB_DATE_EXCHANGE_FORMAT_PYTHON)
 
     return HttpResponse(
         _mvt_query_data(sql_template, sql_params),
