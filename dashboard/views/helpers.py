@@ -1,7 +1,11 @@
 """Various helper functions for MICA views"""
 from datetime import datetime
 
-from dashboard.models import Occurrence
+from django.http import HttpRequest, QueryDict
+from django.contrib.gis.db.models.aggregates import Union as AggregateUnion
+from typing import List
+
+from dashboard.models import Occurrence, Area
 
 
 def readable_string(input_string: str) -> str:
@@ -16,6 +20,31 @@ def extract_int_request(request, param_name) -> int:
         return None
     else:
         return int(val)
+
+
+def _get_querydict_from_request(request: HttpRequest) -> QueryDict:
+    """Allows to transparently get parameters from GET and POST requests
+
+    For POST requests, the body contains a string formatted exactly like the querystring would be in a GET request
+    """
+    if request.method == "GET":
+        return request.GET
+    else:
+        return QueryDict(query_string=request.body)
+
+
+def extract_array_request(request: HttpRequest, param_name: str) -> List[str]:
+    # Return an array of strings
+    # Example:
+    #   in: ?speciesIds[]=10&speciesIds[]=12 (params in URL string)
+    #   out: ['10', '12']
+    # empty params: output is []
+    return _get_querydict_from_request(request).getlist(param_name)
+
+
+def extract_int_array_request(request: HttpRequest, param_name: str) -> List[int]:
+    """Like extract_array_request, but elements are converted to integers"""
+    return list(map(lambda e: int(e), extract_array_request(request, param_name)))
 
 
 def extract_string_request(request, param_name: str) -> str:
@@ -43,9 +72,14 @@ def request_to_occurrences_qs(request):
     """Takes a request, extract common parameters used to filter occurrences and return a corresponding QuerySet"""
     qs = Occurrence.objects.all()
 
-    dataset_id, species_id, start_date, end_date, records_type = filters_from_request(
-        request
-    )
+    (
+        dataset_id,
+        species_id,
+        start_date,
+        end_date,
+        records_type,
+        areas_ids,
+    ) = filters_from_request(request)
 
     # !! IMPORTANT !! Make sure the occurrence filtering here is equivalent to what's done in
     # views.tileserver.JINJASQL_FRAGMENT_FILTER_OCCURRENCES. Otherwise, occurrences returned on the map and on other
@@ -63,6 +97,11 @@ def request_to_occurrences_qs(request):
             qs = qs.filter(is_catch=True)
         else:
             qs = qs.filter(is_catch=False)
+    if areas_ids:
+        combined_areas = Area.objects.filter(pk__in=areas_ids).aggregate(
+            area=AggregateUnion("mpoly")
+        )["area"]
+        qs = qs.filter(location__within=combined_areas)
 
     return qs
 
@@ -73,5 +112,6 @@ def filters_from_request(request):
     start_date = extract_date_request(request, "startDate")
     end_date = extract_date_request(request, "endDate")
     records_type = extract_string_request(request, "recordsType")
+    areas_ids = extract_int_array_request(request, "areaIds[]")
 
-    return dataset_id, species_id, start_date, end_date, records_type
+    return dataset_id, species_id, start_date, end_date, records_type, areas_ids

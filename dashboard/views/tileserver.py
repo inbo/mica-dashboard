@@ -6,8 +6,9 @@ from django.db import connection
 from jinjasql import JinjaSql
 
 from .helpers import readable_string, extract_int_request, filters_from_request
-from ..models import Occurrence
+from ..models import Occurrence, Area
 
+AREAS_TABLE_NAME = Area.objects.model._meta.db_table
 OCCURRENCES_TABLE_NAME = Occurrence.objects.model._meta.db_table
 OCCURRENCES_FIELD_NAME_POINT = "location"
 
@@ -49,6 +50,11 @@ ZOOM_TO_HEX_SIZE = {
 JINJASQL_FRAGMENT_FILTER_OCCURRENCES = Template(
     """
     SELECT * FROM $occurrences_table_name as occ
+    
+    {% if area_ids %}
+    , (SELECT mpoly FROM $areas_table_name WHERE $areas_table_name.id IN {{ area_ids | inclause }}) AS areas
+    {% endif %}
+    
     WHERE (
         1 = 1
         {% if dataset_id %}
@@ -69,9 +75,13 @@ JINJASQL_FRAGMENT_FILTER_OCCURRENCES = Template(
         {% if records_type == "observations" %}
             AND NOT occ.is_catch 
         {% endif %}
+        {% if area_ids %}
+            AND ST_Within(occ.location, areas.mpoly)
+        {% endif %}
     )
 """
 ).substitute(
+    areas_table_name=AREAS_TABLE_NAME,
     occurrences_table_name=OCCURRENCES_TABLE_NAME,
     date_format=DB_DATE_EXCHANGE_FORMAT_POSTGRES,
 )
@@ -107,9 +117,14 @@ def occurrence_min_max_in_hex_grid(request):
     This can be useful to dynamically color the grid according to the occurrence count
     """
     zoom = extract_int_request(request, "zoom")
-    dataset_id, species_id, start_date, end_date, records_type = filters_from_request(
-        request
-    )
+    (
+        dataset_id,
+        species_id,
+        start_date,
+        end_date,
+        records_type,
+        area_ids,
+    ) = filters_from_request(request)
 
     sql_template = readable_string(
         Template(
@@ -127,6 +142,7 @@ def occurrence_min_max_in_hex_grid(request):
         "grid_extent_viewport": False,
         "dataset_id": dataset_id,
         "species_id": species_id,
+        "area_ids": area_ids,
         "records_type": records_type,
     }
 
@@ -145,9 +161,14 @@ def occurrence_min_max_in_hex_grid(request):
 
 def mvt_tiles_hex_aggregated_occurrence(request, zoom, x, y):
     """Tile server, showing occurrences aggregated by hexagon squares. Filters are honoured."""
-    dataset_id, species_id, start_date, end_date, records_type = filters_from_request(
-        request
-    )
+    (
+        dataset_id,
+        species_id,
+        start_date,
+        end_date,
+        records_type,
+        area_ids,
+    ) = filters_from_request(request)
 
     sql_template = readable_string(
         Template(
@@ -166,6 +187,7 @@ def mvt_tiles_hex_aggregated_occurrence(request, zoom, x, y):
         "grid_extent_viewport": True,
         "dataset_id": dataset_id,
         "species_id": species_id,
+        "area_ids": area_ids,
         "start_date": start_date.strftime(DB_DATE_EXCHANGE_FORMAT_PYTHON),
         "end_date": end_date.strftime(DB_DATE_EXCHANGE_FORMAT_PYTHON),
         "records_type": records_type,
