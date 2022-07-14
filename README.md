@@ -4,6 +4,7 @@ Developed using docker-compose.
 
 Deployed at the following URLs:
 
+- Production: https://mica.inbo.be/
 - UAT version: http://mica-uat.inbo.be/
 
 # Howto:
