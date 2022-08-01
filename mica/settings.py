@@ -115,7 +115,12 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 GBIF_COUNTRIES_TO_IMPORT = ["BE", "DE", "NL"]
 GBIF_TAXA_IDS_TO_IMPORT = [5219858, 4264680]  # We only import those species
-GBIF_CATCHES_DATASET_KEY = []
+GBIF_CATCHES_DATASET_KEY = [
+    "b7ee2a4d-8e10-410f-a951-a7f032678ffe",
+    "95b0e787-8508-4247-9e48-18b45fc7d12e",
+    "45f54678-54ac-4468-8aac-bc83722fc768",
+    "3634aee3-41d5-4aa2-8cb5-875859f62a3a",
+]
 
 # A (writable by Django) directory where GBIF datasets are temporarily stored before their ingestion
 DATASET_TEMPORARY_DIR = os.path.join(BASE_DIR, "initial_datasets_temp")
