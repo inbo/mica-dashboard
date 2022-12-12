@@ -102,3 +102,12 @@ class Area(models.Model):
             d["geojson_str"] = self.mpoly.geojson
 
         return d
+
+
+class FishnetSquare(models.Model):
+    """A square of the fishnet grid"""
+
+    mpoly = models.MultiPolygonField(srid=DATA_SRID)
+    waterway_length_in_meters = models.FloatField()
+
+
