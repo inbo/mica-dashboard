@@ -8,44 +8,10 @@
           type="text/css">
 {% endblock %}
 
-{% block content-fixed %}
-    <div class="row">
-        <div class="col"><h1 class="display-4">Muskrat and Coypu monitor</h1></div>
-    </div>
-
-    <hr/>
-
-    <div class="row">
-        <div class="col-8 font-weight-light">
-            This dashboard attempts to give an overview of all muskrat and coypu observations (both catches and field
-            observations) in Flanders, the Netherlands and certain areas in Germany. This dashboard is part of the LIFE
-            MICA
-            project, in which innovative techniques are tested for a more efficient control of muskrat and coypu
-            populations, both invasive species. This dashboard will strengthen cooperation between neighboring countries
-            because information on the presence of muskrats and coypu will be readily shared and used to inform
-            management
-            decisions.
-
-            <p class="font-weight-bold">
-                Be careful when interpreting the data! Not all data is updated regularly and more recent data may
-                therefore be incomplete.
-            </p>
-
-            <p class="font-weight-bold">
-                Latest data import: {{ latest_data_import.end }}
-            </p>
-        </div>
-
-        <div class="col d-flex flex-wrap align-items-center">
-            <img class="img-fluid" src="{% static 'dashboard/img/MICA_logo.png' %}">
-        </div>
-    </div>
-{% endblock %}
-
 {% block content-fluid %}
     <div id="app">
         <div class="row">
-            <div class="col-3 bg-dark text-white shadow">
+            <div class="col-3 text-white shadow" style="background-color: #242d66;">
                 <form>
                     <h4 class="my-3 text-center">Data filtering</h4>
                     <div class="form-group row">
@@ -55,7 +21,7 @@
                                 v-model="selectedFilters.datasetId">
                             <option :value="null">-- ALL --</option>
                             <option v-for="dataset in availableDatasets" :key="dataset.id" :value="dataset.id">[[
-                                dataset.name ]]
+                                    dataset.name ]]
                             </option>
                         </select>
                     </div>
@@ -66,13 +32,14 @@
                                 v-model="selectedFilters.speciesId">
                             <option :value="null">-- ALL --</option>
                             <option v-for="species in availableSpecies" :key="species.id" :value="species.id">[[
-                                species.name ]]
+                                    species.name ]]
                             </option>
                         </select>
                     </div>
 
                     <div class="form-group row">
-                        <label class="col-sm-6 col-form-label col-form-label-sm" for="selectedSpecies">Catches or observations?</label>
+                        <label class="col-sm-6 col-form-label col-form-label-sm" for="selectedSpecies">Catches or
+                            observations?</label>
                         <select class="col-sm-5 form-control form-control-sm" id="selectedSpecies"
                                 v-model="selectedFilters.recordsType">
                             <option :value="null">Both</option>
@@ -87,7 +54,7 @@
                                 v-model="selectedOverlayId">
                             <option :value="null">-- Everywhere --</option>
                             <option v-for="overlay in availableOverlays" :key="overlay.id" :value="overlay.id">[[
-                                overlay.name ]]
+                                    overlay.name ]]
                             </option>
                         </select>
                     </div>
@@ -108,7 +75,8 @@
 
                     <div class="form-group row">
                         <label class="col-sm-6 col-form-label col-form-label-sm" for="opacity">Opacity</label>
-                        <input type="range" class="col-sm-5 custom-range" id="opacity" min="0" max="1" step="0.1" v-model.number="dataLayerOpacity">
+                        <input type="range" class="col-sm-5 custom-range" id="opacity" min="0" max="1" step="0.1"
+                               v-model.number="dataLayerOpacity">
                     </div>
 
                     <div class="form-group">
@@ -121,6 +89,42 @@
             </div>
 
             <div class="col-9">
+
+                <div class="row mt-1">
+                    <div class="col-sm-9">
+                        <h1 class="display-4">Muskrat and Coypu monitor</h1>
+                    </div>
+                    <div class="col-sm-3">
+                        <img class="img-fluid" src="{% static 'dashboard/img/MICA_logo.png' %}">
+                    </div>
+                </div>
+
+
+                <p class="font-weight-light">
+                    This dashboard attempts to give an overview of all muskrat and coypu observations (both catches and
+                    field
+                    observations) in Flanders, the Netherlands and certain areas in Germany. This dashboard is part of
+                    the LIFE
+                    MICA
+                    project, in which innovative techniques are tested for a more efficient control of muskrat and coypu
+                    populations, both invasive species. This dashboard will strengthen cooperation between neighboring
+                    countries
+                    because information on the presence of muskrats and coypu will be readily shared and used to inform
+                    management
+                    decisions.
+                </p>
+
+                <p class="font-weight-bold">
+                    Be careful when interpreting the data! Not all data is updated regularly and more recent data may
+                    therefore be incomplete.
+                </p>
+
+                <p class="font-weight-bold">
+                    Latest data import: {{ latest_data_import.end }}
+                </p>
+
+                <hr>
+
 
                 <dashboard-occurrence-counter :filters="selectedFilters"
                                               :counter-url="endpoints.counterUrl"></dashboard-occurrence-counter>
@@ -156,8 +160,8 @@
                             datasetId: null,
                             speciesId: null,
                             areaIds: [],
-                            startDate: this.firstDayInPreviousMonth().toISOString().substring(0,10),
-                            endDate: this.lastDayInPreviousMonth().toISOString().substring(0,10),
+                            startDate: this.firstDayInPreviousMonth().toISOString().substring(0, 10),
+                            endDate: this.lastDayInPreviousMonth().toISOString().substring(0, 10),
                             recordsType: null, // null | catches | observations
                         },
 
