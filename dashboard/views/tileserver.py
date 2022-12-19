@@ -6,10 +6,12 @@ from django.db import connection
 from jinjasql import JinjaSql
 
 from .helpers import readable_string, extract_int_request, filters_from_request
-from ..models import Occurrence, Area
+from ..models import Occurrence, Area, FishnetSquare
 
 AREAS_TABLE_NAME = Area.objects.model._meta.db_table
 OCCURRENCES_TABLE_NAME = Occurrence.objects.model._meta.db_table
+FISHNET_TABLE_NAME = FishnetSquare.objects.model._meta.db_table
+FISHNET_WATER_SCORE_FIELD = "waterway_length_in_meters"
 OCCURRENCES_FIELD_NAME_POINT = "location"
 
 # ! Make sure the following formats are in sync
@@ -206,7 +208,30 @@ def mvt_tiles_hex_aggregated_occurrence(request, zoom, x, y):
 
 
 def mvt_tiles_occurrences_for_water(request, zoom, x, y):
-    return HttpResponse("", content_type="application/vnd.mapbox-vector-tile")
+    sql_params = {
+        "zoom": zoom,
+        "x": x,
+        "y": y,
+    }
+
+    # Next steps: count the matching occurrences (using filters from the URL) in each square and return that as an
+    # attribute to the tile (rat_score, just like we have water_score). The client will compute and display the ratio.
+
+    sql_template = readable_string(
+        Template(
+            """
+    WITH mvtgeom AS (SELECT ST_AsMVTGeom(mpoly, ST_TileEnvelope({{ zoom }}, {{ x }}, {{ y }})) AS geom, $water_score_field_name as water_score FROM $fishnet_table_name) 
+    SELECT st_asmvt(mvtgeom.*) FROM mvtgeom;"""
+        ).substitute(
+            fishnet_table_name=FISHNET_TABLE_NAME,
+            water_score_field_name=FISHNET_WATER_SCORE_FIELD,
+        )
+    )
+
+    return HttpResponse(
+        _mvt_query_data(sql_template, sql_params),
+        content_type="application/vnd.mapbox-vector-tile",
+    )
 
 
 def _mvt_query_data(sql_template, sql_params):
