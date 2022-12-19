@@ -205,6 +205,10 @@ def mvt_tiles_hex_aggregated_occurrence(request, zoom, x, y):
     )
 
 
+def mvt_tiles_occurrences_for_water(request, zoom, x, y):
+    return HttpResponse("", content_type="application/vnd.mapbox-vector-tile")
+
+
 def _mvt_query_data(sql_template, sql_params):
     """Return binary data for the SQL query defined by sql_template and sql_params.
 

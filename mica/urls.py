@@ -49,7 +49,12 @@ urlpatterns = [
     path(
         "api/tiles_hex_aggregated/<int:zoom>/<int:x>/<int:y>.mvt",
         views.mvt_tiles_hex_aggregated_occurrence,
-        name="dashboard-api-mvt-tiles",
+        name="dashboard-api-mvt-tiles-occurrences",
+    ),
+    path(
+        "api/tiles_occurrences_for_water/<int:zoom>/<int:x>/<int:y>.mvt",
+        views.mvt_tiles_occurrences_for_water,
+        name="dashboard-api-mvt-tiles-occurrences-water",
     ),
     path(
         "api/occ_min_max_in_grid/",
