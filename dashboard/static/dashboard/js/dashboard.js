@@ -220,7 +220,7 @@ Vue.component('dashboard-map', {
     watch: {
         mapDataType: {
             handler: function (newVal) {
-                this.setTilesLayerVisbiility(newVal);
+                this.setTilesLayerVisbilility(newVal);
             }
         },
         overlayId: {
@@ -264,27 +264,33 @@ Vue.component('dashboard-map', {
 
     },
     computed: {
-        colorScale: function () {
+        colorScaleOccurrences: function () {
             return d3.scaleSequentialLog(d3.interpolateBlues)
                 .domain([this.HexMinOccCount, this.HexMaxOccCount])
         },
+        colorScaleOccurrencesForWater: function () {
+            return d3.scaleSequentialLog(d3.interpolateReds)
+        },
+
         occurrencesForWaterTilesLayerStyleFunction: function () {
+            var vm = this;
             return function (feature) {
+
+                let fillColor = vm.colorScaleOccurrencesForWater(feature.properties_.water_score);
+                // TODO: also retrieve the rat_score and compute a ratio
+
                 return new ol.style.Style({
-                    stroke: new ol.style.Stroke({
-                        color: 'red',
-                        width: 5,
-                    }),
                     fill: new ol.style.Fill({
-                        color: 'red',
-                    })
-                });
+                        color: fillColor,
+                    }),
+                })
             }
+
         },
         occurrencesVectorTilesLayerStyleFunction: function () {
             var vm = this;
             return function (feature) {
-                var fillColor = vm.colorScale(feature.properties_.count);
+                var fillColor = vm.colorScaleOccurrences(feature.properties_.count);
                 var textValue = vm.showCounters ? '' + feature.properties_.count : ''
 
                 return new ol.style.Style({
@@ -304,7 +310,7 @@ Vue.component('dashboard-map', {
         }
     },
     methods: {
-        setTilesLayerVisbiility: function (selectedDataType) {
+        setTilesLayerVisbilility: function (selectedDataType) {
             if (selectedDataType === 'occurrences') {
                 this.occurrencesVectorTilesLayer.setVisible(true);
                 this.occurrencesForWaterVectorTilesLayer.setVisible(false);
@@ -325,10 +331,10 @@ Vue.component('dashboard-map', {
             this.loadOccMinMax(this.initialZoom, this.filters);
             this.occurrencesVectorTilesLayer = this.createVectorTilesLayer(this.tileServerUrlTemplateOccurrences, this.occurrencesVectorTilesLayerStyleFunction, 2);
             this.map.addLayer(this.occurrencesVectorTilesLayer);
-            this.occurrencesForWaterVectorTilesLayer = this.createVectorTilesLayer(this.tileServerUrlTemplateOccurrencesForWater, this.occurrencesForWaterVectorTilesLayerStyleFunction, 2);
+            this.occurrencesForWaterVectorTilesLayer = this.createVectorTilesLayer(this.tileServerUrlTemplateOccurrencesForWater, this.occurrencesForWaterTilesLayerStyleFunction, 2);
             this.map.addLayer(this.occurrencesForWaterVectorTilesLayer);
 
-            this.setTilesLayerVisbiility(this.mapDataType);
+            this.setTilesLayerVisbilility(this.mapDataType);
         },
 
         legibleColor: function (color) {
