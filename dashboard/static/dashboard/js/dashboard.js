@@ -218,6 +218,11 @@ Vue.component('dashboard-map', {
         }
     },
     watch: {
+        mapDataType: {
+            handler: function (newVal) {
+                this.setTilesLayerVisbiility(newVal);
+            }
+        },
         overlayId: {
             immediate: true,
             handler: function (overlayId) {
@@ -236,17 +241,17 @@ Vue.component('dashboard-map', {
         },
         HexMinOccCount: {
             handler: function (val) {
-                this.restyleVectorTilesLayer();
+                this.restyleOccurrencesVectorTilesLayer();
             },
         },
         HexMaxOccCount: {
             handler: function (val) {
-                this.restyleVectorTilesLayer();
+                this.restyleOccurrencesVectorTilesLayer();
             },
         },
         showCounters: {
             handler: function () {
-                this.restyleVectorTilesLayer();
+                this.restyleOccurrencesVectorTilesLayer();
             },
         },
         filters: {
@@ -299,7 +304,16 @@ Vue.component('dashboard-map', {
         }
     },
     methods: {
-        restyleVectorTilesLayer: function () {
+        setTilesLayerVisbiility: function (selectedDataType) {
+            if (selectedDataType === 'occurrences') {
+                this.occurrencesVectorTilesLayer.setVisible(true);
+                this.occurrencesForWaterVectorTilesLayer.setVisible(false);
+            } else if (selectedDataType === 'occurrencesForWater') {
+                this.occurrencesForWaterVectorTilesLayer.setVisible(true);
+                this.occurrencesVectorTilesLayer.setVisible(false);
+            }
+        },
+        restyleOccurrencesVectorTilesLayer: function () {
             if (this.occurrencesVectorTilesLayer) {
                 this.occurrencesVectorTilesLayer.setStyle(this.occurrencesVectorTilesLayerStyleFunction)
             }
@@ -313,6 +327,8 @@ Vue.component('dashboard-map', {
             this.map.addLayer(this.occurrencesVectorTilesLayer);
             this.occurrencesForWaterVectorTilesLayer = this.createVectorTilesLayer(this.tileServerUrlTemplateOccurrencesForWater, this.occurrencesForWaterVectorTilesLayerStyleFunction, 2);
             this.map.addLayer(this.occurrencesForWaterVectorTilesLayer);
+
+            this.setTilesLayerVisbiility(this.mapDataType);
         },
 
         legibleColor: function (color) {
