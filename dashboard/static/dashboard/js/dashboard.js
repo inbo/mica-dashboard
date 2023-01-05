@@ -189,7 +189,9 @@ Vue.component('dashboard-table', {
 Vue.component('dashboard-map', {
     props: {
         'minMaxUrl': String,
-        'tileServerUrlTemplate': String,
+        'tileServerUrlTemplateOccurrences': String,
+        'tileServerUrlTemplateOccurrencesForWater': String,
+        'mapDataType': String, // occurrences | occurrencesForWater. Will impact the tile server url to use + display style
 
         'initialLat': Number,
         'initialLon': Number,
@@ -209,7 +211,9 @@ Vue.component('dashboard-map', {
             vectorSource: new ol.source.Vector(),
             areasOverlayCollection: new ol.Collection(),
             HexMinOccCount: 1,
-            HexMaxOccCount: 1
+            HexMaxOccCount: 1,
+
+            occurrencesVectorTilesLayer: null,
         }
     },
     watch: {
@@ -221,8 +225,8 @@ Vue.component('dashboard-map', {
         },
         dataLayerOpacity: {
             handler: function (val) {
-                if (this.vectorTilesLayer) {
-                    this.vectorTilesLayer.setOpacity(val);
+                if (this.occurrencesVectorTilesLayer) {
+                    this.occurrencesVectorTilesLayer.setOpacity(val);
                 }
             }
         },
@@ -245,7 +249,7 @@ Vue.component('dashboard-map', {
             deep: true,
             handler: function (val) {
                 this.loadOccMinMax(this.initialZoom, this.filters);
-                this.replaceVectorTilesLayer()
+                this.replaceVectorTilesLayers()
             },
         }
 
@@ -254,11 +258,6 @@ Vue.component('dashboard-map', {
         colorScale: function () {
             return d3.scaleSequentialLog(d3.interpolateBlues)
                 .domain([this.HexMinOccCount, this.HexMaxOccCount])
-        },
-        vectorTilesLayer: function () {
-            return this.map.getLayers().getArray().find(function (l) {
-                return (l.get('name') == 'vectorTilesLayer')
-            });
         },
         vectorTilesLayerStyleFunction: function () {
             var vm = this;
@@ -284,19 +283,19 @@ Vue.component('dashboard-map', {
     },
     methods: {
         restyleVectorTilesLayer: function () {
-            if (this.vectorTilesLayer) {
-                this.vectorTilesLayer.setStyle(this.vectorTilesLayerStyleFunction)
+            if (this.occurrencesVectorTilesLayer) {
+                this.occurrencesVectorTilesLayer.setStyle(this.vectorTilesLayerStyleFunction)
             }
         },
-        replaceVectorTilesLayer: function () {
-            if (this.vectorTilesLayer) {
+        replaceVectorTilesLayers: function () {
+            if (this.occurrencesVectorTilesLayer) {
                 this.removeVectorTilesLayer();
             }
             this.loadOccMinMax(this.initialZoom, this.filters);
             this.map.addLayer(this.createVectorTilesLayer());
         },
         removeVectorTilesLayer: function () {
-            this.map.removeLayer(this.vectorTilesLayer);
+            this.map.removeLayer(this.occurrencesVectorTilesLayer);
         },
         legibleColor: function (color) {
             return d3.hsl(color).l > 0.5 ? "#000" : "#fff"
@@ -306,14 +305,15 @@ Vue.component('dashboard-map', {
             var l = new ol.layer.VectorTile({
                 source: new ol.source.VectorTile({
                     format: new ol.format.MVT(),
-                    url: vm.tileServerUrlTemplate + '?' + $.param(vm.filters),
+                    url: vm.tileServerUrlTemplateOccurrences + '?' + $.param(vm.filters),
                 }),
                 opacity: vm.dataLayerOpacity,
                 style: vm.vectorTilesLayerStyleFunction,
                 zIndex: 2
             });
 
-            l.set('name', 'vectorTilesLayer')
+            //l.set('name', 'occurrencesVectorTilesLayer')
+            vm.occurrencesVectorTilesLayer = l;
             return l;
         },
         loadOccMinMax: function (zoomLevel, filters) {
@@ -385,7 +385,7 @@ Vue.component('dashboard-map', {
     mounted() {
         this.map = this.createBaseMap();
         this.map.setTarget(this.$refs['map-root']); // Assign the map to div and display
-        this.replaceVectorTilesLayer();
+        this.replaceVectorTilesLayers();
     },
     template: '<div id="map" class="map" ref="map-root" style="height: 500px; width: 100%;"></div>'
 })

@@ -220,7 +220,7 @@ def mvt_tiles_occurrences_for_water(request, zoom, x, y):
     sql_template = readable_string(
         Template(
             """
-    WITH mvtgeom AS (SELECT ST_AsMVTGeom(mpoly, ST_TileEnvelope({{ zoom }}, {{ x }}, {{ y }})) AS geom, $water_score_field_name as water_score FROM $fishnet_table_name) 
+    WITH mvtgeom AS (SELECT ST_AsMVTGeom(mpoly, ST_TileEnvelope({{ zoom }}, {{ x }}, {{ y }})) AS geom, $water_score_field_name as water_score, RANDOM() as rat_score FROM $fishnet_table_name) 
     SELECT st_asmvt(mvtgeom.*) FROM mvtgeom;"""
         ).substitute(
             fishnet_table_name=FISHNET_TABLE_NAME,

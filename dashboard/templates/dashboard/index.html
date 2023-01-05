@@ -143,12 +143,14 @@
                 <dashboard-map
                         :initial-lat="51.58" :initial-lon="4.67" :initial-zoom="initialZoomLevel"
                         :min-max-url="endpoints.minMaxOccCountUrl"
-                        :tile-server-url-template="tileServerUrlTemplate"
+                        :tile-server-url-template-occurrences="endpoints.tileServerUrlTemplateOccurrences"
+                        :tile-server-url-template-occurrences-for-water="endpoints.tileServerUrlTemplateOccurrencesForWater"
                         :overlay-server-url="endpoints.areaGeojsonUrl"
                         :filters="selectedFilters"
                         :show-counters="showHexagonCounters"
                         :data-layer-opacity="dataLayerOpacity"
                         :overlay-id="selectedOverlayId"
+                        :map-data-type="mapDataType"
                 ></dashboard-map>
 
                 <h2>Table view</h2>
@@ -184,7 +186,7 @@
                             counterUrl: "{% url 'dashboard-api-occurrences-counter' %}",
                             occurrencesJsonUrl: "{% url 'dashboard-api-occurrences-json' %}",
                             tileServerUrlTemplateOccurrences: "{% tile_server_url_template 'dashboard-api-mvt-tiles-occurrences' %}",
-                            tileServerUrlTemplateOccurrencesWater: "{% tile_server_url_template 'dashboard-api-mvt-tiles-occurrences-water' %}"
+                            tileServerUrlTemplateOccurrencesForWater: "{% tile_server_url_template 'dashboard-api-mvt-tiles-occurrences-water' %}"
                         },
 
                         availableDatasets: [],
@@ -209,13 +211,13 @@
                     }
                 },
                 computed: {
-                    tileServerUrlTemplate: function () {
+                    /*tileServerUrlTemplate: function () {
                         if (this.mapDataType === "occurrences") {
                             return this.endpoints.tileServerUrlTemplateOccurrences;
                         } else {
                             return this.endpoints.tileServerUrlTemplateOccurrencesWater;
                         }
-                    }
+                    }*/
                 },
                 mounted() {
                     this.populateDatasetSelect();
