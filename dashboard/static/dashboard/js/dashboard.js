@@ -214,6 +214,7 @@ Vue.component('dashboard-map', {
             HexMaxOccCount: 1,
 
             occurrencesVectorTilesLayer: null,
+            occurrencesForWaterVectorTilesLayer: null,
         }
     },
     watch: {
@@ -227,6 +228,9 @@ Vue.component('dashboard-map', {
             handler: function (val) {
                 if (this.occurrencesVectorTilesLayer) {
                     this.occurrencesVectorTilesLayer.setOpacity(val);
+                }
+                if (this.occurrencesForWaterVectorTilesLayer) {
+                    this.occurrencesForWaterVectorTilesLayer.setOpacity(val);
                 }
             }
         },
@@ -259,7 +263,20 @@ Vue.component('dashboard-map', {
             return d3.scaleSequentialLog(d3.interpolateBlues)
                 .domain([this.HexMinOccCount, this.HexMaxOccCount])
         },
-        vectorTilesLayerStyleFunction: function () {
+        occurrencesForWaterTilesLayerStyleFunction: function () {
+            return function (feature) {
+                return new ol.style.Style({
+                    stroke: new ol.style.Stroke({
+                        color: 'red',
+                        width: 5,
+                    }),
+                    fill: new ol.style.Fill({
+                        color: 'red',
+                    })
+                });
+            }
+        },
+        occurrencesVectorTilesLayerStyleFunction: function () {
             var vm = this;
             return function (feature) {
                 var fillColor = vm.colorScale(feature.properties_.count);
@@ -284,38 +301,39 @@ Vue.component('dashboard-map', {
     methods: {
         restyleVectorTilesLayer: function () {
             if (this.occurrencesVectorTilesLayer) {
-                this.occurrencesVectorTilesLayer.setStyle(this.vectorTilesLayerStyleFunction)
+                this.occurrencesVectorTilesLayer.setStyle(this.occurrencesVectorTilesLayerStyleFunction)
             }
         },
         replaceVectorTilesLayers: function () {
-            if (this.occurrencesVectorTilesLayer) {
-                this.removeVectorTilesLayer();
-            }
-            this.loadOccMinMax(this.initialZoom, this.filters);
-            this.map.addLayer(this.createVectorTilesLayer());
-        },
-        removeVectorTilesLayer: function () {
             this.map.removeLayer(this.occurrencesVectorTilesLayer);
+            this.map.removeLayer(this.occurrencesForWaterVectorTilesLayer);
+
+            this.loadOccMinMax(this.initialZoom, this.filters);
+            this.occurrencesVectorTilesLayer = this.createVectorTilesLayer(this.tileServerUrlTemplateOccurrences, this.occurrencesVectorTilesLayerStyleFunction, 2);
+            this.map.addLayer(this.occurrencesVectorTilesLayer);
+            this.occurrencesForWaterVectorTilesLayer = this.createVectorTilesLayer(this.tileServerUrlTemplateOccurrencesForWater, this.occurrencesForWaterVectorTilesLayerStyleFunction, 2);
+            this.map.addLayer(this.occurrencesForWaterVectorTilesLayer);
         },
+
         legibleColor: function (color) {
             return d3.hsl(color).l > 0.5 ? "#000" : "#fff"
         },
-        createVectorTilesLayer: function () {
+
+        createVectorTilesLayer: function (tileServerUrlTemplate, styleFunction, zIndex) {
             var vm = this;
             var l = new ol.layer.VectorTile({
                 source: new ol.source.VectorTile({
                     format: new ol.format.MVT(),
-                    url: vm.tileServerUrlTemplateOccurrences + '?' + $.param(vm.filters),
+                    url: tileServerUrlTemplate + '?' + $.param(vm.filters),
                 }),
                 opacity: vm.dataLayerOpacity,
-                style: vm.vectorTilesLayerStyleFunction,
-                zIndex: 2
+                style: styleFunction,
+                zIndex: zIndex
             });
 
-            //l.set('name', 'occurrencesVectorTilesLayer')
-            vm.occurrencesVectorTilesLayer = l;
             return l;
         },
+
         loadOccMinMax: function (zoomLevel, filters) {
             var vm = this
 
