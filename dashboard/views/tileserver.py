@@ -209,7 +209,7 @@ def mvt_tiles_hex_aggregated_occurrence(request, zoom, x, y):
 
 JINJASQL_FRAGMENT_AGGREGATED_WATER_GRID = Template(
     """
-    SELECT count(*) AS rats_count, squares.mpoly AS geom, squares.waterway_length_in_meters
+    SELECT count(*) AS rats_score, squares.mpoly AS geom, squares.waterway_length_in_meters AS water_score
     FROM (
         SELECT mpoly, waterway_length_in_meters
         FROM dashboard_fishnetsquare
@@ -241,7 +241,7 @@ def mvt_tiles_occurrences_for_water(request, zoom, x, y):
             """
         WITH 
             grid AS ($jinjasql_fragment_aggregated_water_grid),
-            mvtgeom AS (SELECT ST_AsMVTGeom(geom, ST_TileEnvelope({{ zoom }}, {{ x }}, {{ y }})) AS geom, rats_count, waterway_length_in_meters FROM grid)
+            mvtgeom AS (SELECT ST_AsMVTGeom(geom, ST_TileEnvelope({{ zoom }}, {{ x }}, {{ y }})) AS geom, rats_score, water_score FROM grid)
         SELECT st_asmvt(mvtgeom.*) FROM mvtgeom;
     """
         ).substitute(
@@ -268,33 +268,6 @@ def mvt_tiles_occurrences_for_water(request, zoom, x, y):
         _mvt_query_data(sql_template, sql_params),
         content_type="application/vnd.mapbox-vector-tile",
     )
-
-
-# def mvt_tiles_occurrences_for_water(request, zoom, x, y):
-#     sql_params = {
-#         "zoom": zoom,
-#         "x": x,
-#         "y": y,
-#     }
-#
-#     # Next steps: count the matching occurrences (using filters from the URL) in each square and return that as an
-#     # attribute to the tile (rat_score, just like we have water_score). The client will compute and display the ratio.
-#
-#     sql_template = readable_string(
-#         Template(
-#             """
-#     WITH mvtgeom AS (SELECT ST_AsMVTGeom(mpoly, ST_TileEnvelope({{ zoom }}, {{ x }}, {{ y }})) AS geom, $water_score_field_name as water_score, RANDOM() as rat_score FROM $fishnet_table_name)
-#     SELECT st_asmvt(mvtgeom.*) FROM mvtgeom;"""
-#         ).substitute(
-#             fishnet_table_name=FISHNET_TABLE_NAME,
-#             water_score_field_name=FISHNET_WATER_SCORE_FIELD,
-#         )
-#     )
-#
-#     return HttpResponse(
-#         _mvt_query_data(sql_template, sql_params),
-#         content_type="application/vnd.mapbox-vector-tile",
-#     )
 
 
 def _mvt_query_data(sql_template, sql_params):

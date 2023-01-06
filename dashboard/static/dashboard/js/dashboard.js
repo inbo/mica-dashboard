@@ -215,6 +215,12 @@ Vue.component('dashboard-map', {
 
             occurrencesVectorTilesLayer: null,
             occurrencesForWaterVectorTilesLayer: null,
+
+            // TODO: make this dynamic
+            minR: 0, // Water map: minimum rat score per square in the whole data set (! depends on filters)
+            maxR: 10, // Water map: maximum rat score per square in the whole data set (! depends on filters)
+            minW: 0, // Water map: minimum water score per square in the whole data set
+            maxW: 3500  // Water map: maximum water score per square in the whole data set
         }
     },
     watch: {
@@ -269,32 +275,38 @@ Vue.component('dashboard-map', {
                 .domain([this.HexMinOccCount, this.HexMaxOccCount])
         },
         colorScaleOccurrencesForWater: function () {
-            return d3.scaleSequentialLog(d3.interpolateReds)
+            return d3.scaleSequential(d3.interpolateReds)
+        },
+
+        ratScaleOccurrencesForWater: function () {
+            return d3.scaleLinear().domain([this.minR, this.maxR]).clamp(true);
+        },
+        waterScaleOccurrencesForWater: function () {
+            return d3.scaleLinear().domain([this.minW, this.maxW]).clamp(true);
         },
 
         occurrencesForWaterTilesLayerStyleFunction: function () {
             var vm = this;
             return function (feature) {
 
-                let r = feature.properties_.rats_count;
-                let w = feature.properties_.waterway_length_in_meters;
+                const r = feature.properties_.rats_score;
+                const w = feature.properties_.water_score;
+                const similarity = vm.getWaterMapScoresSimilarity(r, w);
 
-                //let fillColor = vm.colorScaleOccurrencesForWater(feature.properties_.water_score);
-                let textValue = "r: " + r + "\n" + "w: " + w;
-                // TODO: also retrieve the rat_score and compute a ratio
-                //console.log(feature.properties_)
+                let textValue = "r: " + r + "\n" + "w: " + w + "\n" + "s: " + similarity;
 
+                const fillColor = vm.colorScaleOccurrencesForWater(similarity);
                 return new ol.style.Style({
                     stroke: new ol.style.Stroke({
                         color: 'black',
                         width: 1,
                     }),
                     fill: new ol.style.Fill({
-                        color: 'lightgrey',
+                        color: fillColor,
                     }),
                     text: new ol.style.Text({
                         text: textValue,
-                        //fill: 'black',
+                        fill: new ol.style.Fill({color: vm.legibleColor(fillColor)})
                     })
                 })
             }
@@ -323,6 +335,13 @@ Vue.component('dashboard-map', {
         }
     },
     methods: {
+        getWaterMapScoresSimilarity: function(ratsScore, waterScore) {
+            // Apply scales to both scores, so we have values between 0 and 1
+            const ratsScoreScaled = this.ratScaleOccurrencesForWater(ratsScore)
+            const waterScoreScaled = this.waterScaleOccurrencesForWater(waterScore)
+            // Check how similar they are (between 0 and 1 too)
+            return (1 - Math.abs(ratsScoreScaled - waterScoreScaled));
+        },
         setTilesLayerVisbilility: function (selectedDataType) {
             if (selectedDataType === 'occurrences') {
                 this.occurrencesVectorTilesLayer.setVisible(true);
