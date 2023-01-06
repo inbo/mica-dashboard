@@ -88,7 +88,7 @@ JINJASQL_FRAGMENT_FILTER_OCCURRENCES = Template(
     date_format=DB_DATE_EXCHANGE_FORMAT_POSTGRES,
 )
 
-JINJASQL_FRAGMENT_AGGREGATED_GRID = Template(
+JINJASQL_FRAGMENT_AGGREGATED_HEX_GRID = Template(
     """
     SELECT COUNT(*), hexes.geom
                     FROM
@@ -131,11 +131,11 @@ def occurrence_min_max_in_hex_grid(request):
     sql_template = readable_string(
         Template(
             """
-    WITH grid AS ($jinjasql_fragment_aggregated_grid)
+    WITH grid AS ($jinjasql_fragment_aggregated_hex_grid)
     SELECT MIN(count), MAX(count) FROM grid;
     """
         ).substitute(
-            jinjasql_fragment_aggregated_grid=JINJASQL_FRAGMENT_AGGREGATED_GRID
+            jinjasql_fragment_aggregated_hex_grid=JINJASQL_FRAGMENT_AGGREGATED_HEX_GRID
         )
     )
 
@@ -175,12 +175,12 @@ def mvt_tiles_hex_aggregated_occurrence(request, zoom, x, y):
     sql_template = readable_string(
         Template(
             """
-        WITH grid AS ($jinjasql_fragment_aggregated_grid),
+        WITH grid AS ($jinjasql_fragment_aggregated_hex_grid),
              mvtgeom AS (SELECT ST_AsMVTGeom(geom, ST_TileEnvelope({{ zoom }}, {{ x }}, {{ y }})) AS geom, count FROM grid)
         SELECT st_asmvt(mvtgeom.*) FROM mvtgeom;
     """
         ).substitute(
-            jinjasql_fragment_aggregated_grid=JINJASQL_FRAGMENT_AGGREGATED_GRID
+            jinjasql_fragment_aggregated_hex_grid=JINJASQL_FRAGMENT_AGGREGATED_HEX_GRID
         )
     )
 
@@ -207,31 +207,84 @@ def mvt_tiles_hex_aggregated_occurrence(request, zoom, x, y):
     )
 
 
+JINJASQL_FRAGMENT_AGGREGATED_WATER_GRID = Template(
+    """
+    SELECT count(*) AS rats_count, squares.mpoly AS geom, squares.waterway_length_in_meters
+    FROM (
+        SELECT mpoly, waterway_length_in_meters
+        FROM dashboard_fishnetsquare
+        WHERE mpoly && ST_TileEnvelope({{ zoom }}, {{ x }}, {{ y }})
+    ) AS squares
+    INNER JOIN (
+        SELECT * FROM $occurrences_table_name AS occ
+        WHERE occ.is_catch = FALSE
+    ) AS filtered_occurrences
+    ON ST_Intersects(filtered_occurrences.location, squares.mpoly)
+    GROUP BY squares.mpoly, squares.waterway_length_in_meters
+"""
+).substitute(occurrences_table_name=OCCURRENCES_TABLE_NAME)
+
+
 def mvt_tiles_occurrences_for_water(request, zoom, x, y):
+    (
+        dataset_id,
+        species_id,
+        start_date,
+        end_date,
+        records_type,
+        area_ids,
+    ) = filters_from_request(request)
+
+    sql_template = readable_string(
+        Template(
+            """
+        WITH 
+            grid AS ($jinjasql_fragment_aggregated_water_grid),
+            mvtgeom AS (SELECT ST_AsMVTGeom(geom, ST_TileEnvelope({{ zoom }}, {{ x }}, {{ y }})) AS geom, rats_count, waterway_length_in_meters FROM grid)
+        SELECT st_asmvt(mvtgeom.*) FROM mvtgeom;
+    """
+        ).substitute(
+            jinjasql_fragment_aggregated_water_grid=JINJASQL_FRAGMENT_AGGREGATED_WATER_GRID
+        )
+    )
+
     sql_params = {
         "zoom": zoom,
         "x": x,
         "y": y,
     }
 
-    # Next steps: count the matching occurrences (using filters from the URL) in each square and return that as an
-    # attribute to the tile (rat_score, just like we have water_score). The client will compute and display the ratio.
-
-    sql_template = readable_string(
-        Template(
-            """
-    WITH mvtgeom AS (SELECT ST_AsMVTGeom(mpoly, ST_TileEnvelope({{ zoom }}, {{ x }}, {{ y }})) AS geom, $water_score_field_name as water_score, RANDOM() as rat_score FROM $fishnet_table_name) 
-    SELECT st_asmvt(mvtgeom.*) FROM mvtgeom;"""
-        ).substitute(
-            fishnet_table_name=FISHNET_TABLE_NAME,
-            water_score_field_name=FISHNET_WATER_SCORE_FIELD,
-        )
-    )
-
     return HttpResponse(
         _mvt_query_data(sql_template, sql_params),
         content_type="application/vnd.mapbox-vector-tile",
     )
+
+
+# def mvt_tiles_occurrences_for_water(request, zoom, x, y):
+#     sql_params = {
+#         "zoom": zoom,
+#         "x": x,
+#         "y": y,
+#     }
+#
+#     # Next steps: count the matching occurrences (using filters from the URL) in each square and return that as an
+#     # attribute to the tile (rat_score, just like we have water_score). The client will compute and display the ratio.
+#
+#     sql_template = readable_string(
+#         Template(
+#             """
+#     WITH mvtgeom AS (SELECT ST_AsMVTGeom(mpoly, ST_TileEnvelope({{ zoom }}, {{ x }}, {{ y }})) AS geom, $water_score_field_name as water_score, RANDOM() as rat_score FROM $fishnet_table_name)
+#     SELECT st_asmvt(mvtgeom.*) FROM mvtgeom;"""
+#         ).substitute(
+#             fishnet_table_name=FISHNET_TABLE_NAME,
+#             water_score_field_name=FISHNET_WATER_SCORE_FIELD,
+#         )
+#     )
+#
+#     return HttpResponse(
+#         _mvt_query_data(sql_template, sql_params),
+#         content_type="application/vnd.mapbox-vector-tile",
+#     )
 
 
 def _mvt_query_data(sql_template, sql_params):
