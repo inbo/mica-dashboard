@@ -276,13 +276,26 @@ Vue.component('dashboard-map', {
             var vm = this;
             return function (feature) {
 
-                let fillColor = vm.colorScaleOccurrencesForWater(feature.properties_.water_score);
+                let r = feature.properties_.rats_count;
+                let w = feature.properties_.waterway_length_in_meters;
+
+                //let fillColor = vm.colorScaleOccurrencesForWater(feature.properties_.water_score);
+                let textValue = "r: " + r + "\n" + "w: " + w;
                 // TODO: also retrieve the rat_score and compute a ratio
+                //console.log(feature.properties_)
 
                 return new ol.style.Style({
-                    fill: new ol.style.Fill({
-                        color: fillColor,
+                    stroke: new ol.style.Stroke({
+                        color: 'black',
+                        width: 1,
                     }),
+                    fill: new ol.style.Fill({
+                        color: 'lightgrey',
+                    }),
+                    text: new ol.style.Text({
+                        text: textValue,
+                        //fill: 'black',
+                    })
                 })
             }
 

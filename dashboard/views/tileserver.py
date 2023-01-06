@@ -216,13 +216,14 @@ JINJASQL_FRAGMENT_AGGREGATED_WATER_GRID = Template(
         WHERE mpoly && ST_TileEnvelope({{ zoom }}, {{ x }}, {{ y }})
     ) AS squares
     INNER JOIN (
-        SELECT * FROM $occurrences_table_name AS occ
-        WHERE occ.is_catch = FALSE
+        $jinjasql_fragment_filter_occurrences
     ) AS filtered_occurrences
     ON ST_Intersects(filtered_occurrences.location, squares.mpoly)
     GROUP BY squares.mpoly, squares.waterway_length_in_meters
 """
-).substitute(occurrences_table_name=OCCURRENCES_TABLE_NAME)
+).substitute(
+    jinjasql_fragment_filter_occurrences=JINJASQL_FRAGMENT_FILTER_OCCURRENCES,
+)
 
 
 def mvt_tiles_occurrences_for_water(request, zoom, x, y):
@@ -249,10 +250,19 @@ def mvt_tiles_occurrences_for_water(request, zoom, x, y):
     )
 
     sql_params = {
+        "dataset_id": dataset_id,
+        "species_id": species_id,
+        "area_ids": area_ids,
+        "records_type": records_type,
         "zoom": zoom,
         "x": x,
         "y": y,
     }
+
+    if start_date:
+        sql_params["start_date"] = start_date.strftime(DB_DATE_EXCHANGE_FORMAT_PYTHON)
+    if end_date:
+        sql_params["end_date"] = end_date.strftime(DB_DATE_EXCHANGE_FORMAT_PYTHON)
 
     return HttpResponse(
         _mvt_query_data(sql_template, sql_params),
