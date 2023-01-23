@@ -2,6 +2,7 @@ from string import Template
 
 from django.http import HttpResponse, JsonResponse
 from django.db import connection
+from django.views.decorators.cache import cache_page
 
 from jinjasql import JinjaSql
 
@@ -226,6 +227,7 @@ JINJASQL_FRAGMENT_AGGREGATED_WATER_GRID = Template(
 )
 
 
+@cache_page(60 * 60)
 def mvt_tiles_occurrences_for_water(request, zoom, x, y):
     (
         dataset_id,

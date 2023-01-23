@@ -203,7 +203,7 @@ Vue.component('dashboard-map', {
         'dataLayerOpacity': Number,
 
         'overlayServerUrl': String,
-        'overlayId': null
+        'overlayId': null,
     },
     data: function () {
         return {
@@ -217,10 +217,14 @@ Vue.component('dashboard-map', {
             occurrencesForWaterVectorTilesLayer: null,
 
             // TODO: make this dynamic
-            minR: 0, // Water map: minimum rat score per square in the whole data set (! depends on filters)
+            /*minR: 0, // Water map: minimum rat score per square in the whole data set (! depends on filters)
             maxR: 10, // Water map: maximum rat score per square in the whole data set (! depends on filters)
             minW: 0, // Water map: minimum water score per square in the whole data set
-            maxW: 3500  // Water map: maximum water score per square in the whole data set
+            maxW: 3500,  // Water map: maximum water score per square in the whole data set
+
+             */
+
+            maxRatsPerKmWaterway: 100, // Water map: maximum rats per km waterway, for the color scale
         }
     },
     watch: {
@@ -276,6 +280,7 @@ Vue.component('dashboard-map', {
         },
         colorScaleOccurrencesForWater: function () {
             return d3.scaleSequential(d3.interpolateReds)
+                .domain([0, this.maxRatsPerKmWaterway])
         },
 
         ratScaleOccurrencesForWater: function () {
@@ -291,11 +296,12 @@ Vue.component('dashboard-map', {
 
                 const r = feature.properties_.rats_score;
                 const w = feature.properties_.water_score;
-                const similarity = vm.getWaterMapScoresSimilarity(r, w);
 
-                let textValue = "r: " + r + "\n" + "w: " + w + "\n" + "s: " + similarity;
+                const ratsPerKmWaterway = w === 0 ? 0 : r / ( w / 1000 );
 
-                const fillColor = vm.colorScaleOccurrencesForWater(similarity);
+                let textValue = ratsPerKmWaterway.toFixed(2);
+                const fillColor = vm.colorScaleOccurrencesForWater(ratsPerKmWaterway);
+
                 return new ol.style.Style({
                     stroke: new ol.style.Stroke({
                         color: 'black',
