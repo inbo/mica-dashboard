@@ -111,3 +111,42 @@ class FishnetSquare(models.Model):
     waterway_length_in_meters = models.FloatField()
 
 
+# The following models are for the biodiversity indicators per area (concern other biodiversity than rats)
+class BiodiversityIndicatorSpecies(models.Model):
+    PLANTS = "PL"
+    BIRDS = "BI"
+    ODONATA = "OD"
+    OTHERS = "OT"
+
+    SPECIES_GROUP_CHOICES = [
+        (PLANTS, "Plants"),
+        (BIRDS, "Birds"),
+        (ODONATA, "Odonata"),
+        (OTHERS, "Others"),
+    ]
+
+    scientific_name = models.CharField(max_length=255)
+    s_kingdom = models.CharField(max_length=255)
+    s_class = models.CharField(max_length=255)
+    s_order = models.CharField(max_length=255)
+
+    species_group = models.CharField(
+        max_length=2, choices=SPECIES_GROUP_CHOICES, default=OTHERS
+    )
+
+    def auto_set_species_group(self):
+        if self.s_kingdom == "Plantae":
+            self.species_group = self.PLANTS
+        elif self.s_class == "Aves":
+            self.species_group = self.BIRDS
+        elif self.s_order == "Odonata":
+            self.species_group = self.ODONATA
+        else:
+            self.species_group = self.OTHERS
+
+
+class BiodiversityIndicatorObservation(models.Model):
+    gbif_id = models.CharField(max_length=255)
+    species = models.ForeignKey(BiodiversityIndicatorSpecies, on_delete=models.PROTECT)
+    date = models.DateField()
+    location = models.PointField(blank=True, null=True, srid=DATA_SRID)
