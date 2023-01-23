@@ -227,7 +227,7 @@ JINJASQL_FRAGMENT_AGGREGATED_WATER_GRID = Template(
 )
 
 
-@cache_page(60 * 60)
+@cache_page(60 * 60 * 6)
 def mvt_tiles_occurrences_for_water(request, zoom, x, y):
     (
         dataset_id,
