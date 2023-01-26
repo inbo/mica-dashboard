@@ -39,6 +39,7 @@ def extract_array_request(request: HttpRequest, param_name: str) -> List[str]:
     #   in: ?speciesIds[]=10&speciesIds[]=12 (params in URL string)
     #   out: ['10', '12']
     # empty params: output is []
+    # Beware: in previous example, brackets should be provided in the param_name: speciesIds[]
     return _get_querydict_from_request(request).getlist(param_name)
 
 

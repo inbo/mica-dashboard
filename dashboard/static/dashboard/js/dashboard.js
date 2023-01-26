@@ -114,9 +114,7 @@ Vue.component('dashboard-table', {
             params.limit = pageSize;
             params.page_number = pageNumber;
 
-
             var vm = this;
-
             $.ajax({
                 url: this.occurrencesJsonUrl,
                 data: params,
@@ -219,6 +217,7 @@ Vue.component('dashboard-map', {
 
             occurrencesVectorTilesLayer: null,
             occurrencesForWaterVectorTilesLayer: null,
+            biodiversityVectorTilesLayer: null,
 
             // TODO: make this dynamic
             /*minR: 0, // Water map: minimum rat score per square in the whole data set (! depends on filters)
@@ -234,7 +233,24 @@ Vue.component('dashboard-map', {
     watch: {
         mapDataType: {
             handler: function (newVal) {
-                this.setTilesLayerVisbilility(newVal);
+                this.setRatsTilesLayerVisbilility(newVal);
+            }
+        },
+        showBiodiversityRichness: {
+            handler: function (newVal) {
+                this.setBiodiversityTilesLayerVisibility();
+            }
+        },
+        selectedYearsRichness: {
+            //immediate: true,
+            handler: function (newVal) {
+                this.replaceVectorTilesBiodiversityLayer();
+            }
+        },
+        selectedGroupsRichness: {
+            //immediate: true,
+            handler: function (newVal) {
+                this.replaceVectorTilesBiodiversityLayer();
             }
         },
         overlayId: {
@@ -267,7 +283,7 @@ Vue.component('dashboard-map', {
             deep: true,
             handler: function (val) {
                 this.loadOccMinMax(this.initialZoom, this.filters);
-                this.replaceVectorTilesLayers()
+                this.replaceVectorTilesRatsLayers()
             },
         }
 
@@ -347,7 +363,7 @@ Vue.component('dashboard-map', {
             // Check how similar they are (between 0 and 1 too)
             return (1 - Math.abs(ratsScoreScaled - waterScoreScaled));
         },
-        setTilesLayerVisbilility: function (selectedDataType) {
+        setRatsTilesLayerVisbilility: function (selectedDataType) {
             if (selectedDataType === 'occurrences') {
                 this.occurrencesVectorTilesLayer.setVisible(true);
                 this.occurrencesForWaterVectorTilesLayer.setVisible(false);
@@ -356,29 +372,67 @@ Vue.component('dashboard-map', {
                 this.occurrencesVectorTilesLayer.setVisible(false);
             }
         },
+        setBiodiversityTilesLayerVisibility: function() {
+            if (this.showBiodiversityRichness) {
+                this.biodiversityVectorTilesLayer.setVisible(true);
+            } else {
+                this.biodiversityVectorTilesLayer.setVisible(false);
+            }
+        },
         restyleOccurrencesVectorTilesLayer: function () {
             if (this.occurrencesVectorTilesLayer) {
                 this.occurrencesVectorTilesLayer.setStyle(this.occurrencesVectorTilesLayerStyleFunction)
             }
         },
-        replaceVectorTilesLayers: function () {
+        replaceVectorTilesRatsLayers: function () {
             this.map.removeLayer(this.occurrencesVectorTilesLayer);
             this.map.removeLayer(this.occurrencesForWaterVectorTilesLayer);
 
             this.loadOccMinMax(this.initialZoom, this.filters);
-            this.occurrencesVectorTilesLayer = this.createVectorTilesLayer(this.tileServerUrlTemplateOccurrences, this.occurrencesVectorTilesLayerStyleFunction, 2);
+            this.occurrencesVectorTilesLayer = this.createVectorTilesRatsLayer(this.tileServerUrlTemplateOccurrences, this.occurrencesVectorTilesLayerStyleFunction, 2);
             this.map.addLayer(this.occurrencesVectorTilesLayer);
-            this.occurrencesForWaterVectorTilesLayer = this.createVectorTilesLayer(this.tileServerUrlTemplateOccurrencesForWater, this.occurrencesForWaterTilesLayerStyleFunction, 2);
+            this.occurrencesForWaterVectorTilesLayer = this.createVectorTilesRatsLayer(this.tileServerUrlTemplateOccurrencesForWater, this.occurrencesForWaterTilesLayerStyleFunction, 2);
             this.map.addLayer(this.occurrencesForWaterVectorTilesLayer);
 
-            this.setTilesLayerVisbilility(this.mapDataType);
+            this.setRatsTilesLayerVisbilility(this.mapDataType);
+        },
+
+        replaceVectorTilesBiodiversityLayer: function () {
+            this.map.removeLayer(this.biodiversityVectorTilesLayer);
+            this.biodiversityVectorTilesLayer = this.createVectorTilesBiodiversityLayer(this.tileServerUrlTemplateRichness, 2);
+            //console.log("passe", this.biodiversityVectorTilesLayer);
+            this.map.addLayer(this.biodiversityVectorTilesLayer);
+
+            this.setBiodiversityTilesLayerVisibility();
         },
 
         legibleColor: function (color) {
             return d3.hsl(color).l > 0.5 ? "#000" : "#fff"
         },
 
-        createVectorTilesLayer: function (tileServerUrlTemplate, styleFunction, zIndex) {
+        createVectorTilesBiodiversityLayer: function (tileServerUrlTemplate, zIndex) {
+            let vm = this;
+
+            const yearsParams = this.selectedYearsRichness.map(function(el) {
+                return 'years[]=' + el;
+            }).join('&');
+
+            const speciesGroupParams = this.selectedGroupsRichness.map(function(el) {
+                return 'speciesGroups[]=' + el;
+            }).join('&');
+
+            let l = new ol.layer.VectorTile({
+                source: new ol.source.VectorTile({
+                    format: new ol.format.MVT(),
+                    url: tileServerUrlTemplate + "?" + yearsParams + "&" + speciesGroupParams,
+                }),
+                zIndex: zIndex,
+            });
+
+            return l;
+        },
+
+        createVectorTilesRatsLayer: function (tileServerUrlTemplate, styleFunction, zIndex) {
             var vm = this;
             var l = new ol.layer.VectorTile({
                 source: new ol.source.VectorTile({
@@ -462,7 +516,7 @@ Vue.component('dashboard-map', {
     mounted() {
         this.map = this.createBaseMap();
         this.map.setTarget(this.$refs['map-root']); // Assign the map to div and display
-        this.replaceVectorTilesLayers();
+        this.replaceVectorTilesRatsLayers();
     },
     template: '<div id="map" class="map" ref="map-root" style="height: 500px; width: 100%;"></div>'
 })

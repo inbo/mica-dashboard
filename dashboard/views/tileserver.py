@@ -11,6 +11,7 @@ from .helpers import (
     extract_int_request,
     filters_from_request,
     extract_array_request,
+    extract_int_array_request,
 )
 from ..models import Occurrence, Area, FishnetSquare
 
@@ -279,8 +280,8 @@ def mvt_tiles_occurrences_for_water(request, zoom, x, y):
 
 def mvt_tiles_areas(request, zoom, x, y):
     """Tile server, showing MICA areas with biodiversity richness attributes."""
-    year = extract_int_request(request, "year")
-    species_group = extract_array_request(request, "speciesGroup")
+    years = extract_int_array_request(request, "years[]")
+    species_groups = extract_array_request(request, "speciesGroups[]")
 
     sql_template = readable_string(
         """
@@ -291,8 +292,11 @@ def mvt_tiles_areas(request, zoom, x, y):
             WHERE
             obs.species_id = species.id AND
             species.species_group = 'BI' AND
-            {% if year %}
-                EXTRACT('year' FROM obs.date) = {{ year }} AND
+            {% if years %}
+                EXTRACT('year' FROM obs.date) IN {{ years | inclause }} AND
+            {% endif %}
+            {% if species_group_codes %}
+                species_group IN {{ species_group_codes | inclause }} AND
             {% endif %}
             st_within(obs.location, areas.mpoly) AND
             mpoly && ST_TileEnvelope({{ zoom }}, {{ x }}, {{ y }}) AND
@@ -304,7 +308,8 @@ def mvt_tiles_areas(request, zoom, x, y):
     )
 
     sql_params = {
-        "year": year,
+        "species_group_codes": species_groups,
+        "years": years,
         "zoom": zoom,
         "x": x,
         "y": y,
