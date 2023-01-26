@@ -198,7 +198,6 @@ Vue.component('dashboard-map', {
         'initialZoom': Number,
 
         'filters': Object, // For filtering occurrence data
-        'showCounters': Boolean,
 
         'dataLayerOpacity': Number,
 
@@ -259,11 +258,6 @@ Vue.component('dashboard-map', {
                 this.restyleOccurrencesVectorTilesLayer();
             },
         },
-        showCounters: {
-            handler: function () {
-                this.restyleOccurrencesVectorTilesLayer();
-            },
-        },
         filters: {
             deep: true,
             handler: function (val) {
@@ -321,8 +315,8 @@ Vue.component('dashboard-map', {
         occurrencesVectorTilesLayerStyleFunction: function () {
             var vm = this;
             return function (feature) {
-                var fillColor = vm.colorScaleOccurrences(feature.properties_.count);
-                var textValue = vm.showCounters ? '' + feature.properties_.count : ''
+                const fillColor = vm.colorScaleOccurrences(feature.properties_.count);
+                const textValue = feature.properties_.count.toString();
 
                 return new ol.style.Style({
                     stroke: new ol.style.Stroke({
