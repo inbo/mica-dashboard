@@ -41,6 +41,16 @@ urlpatterns = [
         name="dashboard-api-available-species",
     ),
     path(
+        "api/available_years_biodiversity_index/",
+        views.available_years_biodiversity_index_json,
+        name="dashboard-api-available-years-biodiversity-index",
+    ),
+    path(
+        "api/available_groups_biodiversity_index/",
+        views.available_groups_biodiversity_index_json,
+        name="dashboard-api-available-groups-biodiversity-index",
+    ),
+    path(
         "api/occurrences_count/",
         views.occurrences_counter,
         name="dashboard-api-occurrences-counter",

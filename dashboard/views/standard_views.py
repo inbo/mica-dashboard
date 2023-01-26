@@ -1,10 +1,17 @@
 from django.core.paginator import Paginator
 from django.core.serializers import serialize
-from django.db.models import Max, Min
+from django.db.models.functions import ExtractYear
 from django.http import JsonResponse, HttpRequest, HttpResponse
 from django.shortcuts import render, get_object_or_404
 
-from dashboard.models import Dataset, Species, Area, DataImport
+from dashboard.models import (
+    Dataset,
+    Species,
+    Area,
+    DataImport,
+    BiodiversityIndicatorObservation,
+    BiodiversityIndicatorSpecies,
+)
 
 from dashboard.views.helpers import request_to_occurrences_qs, extract_int_request
 
@@ -71,3 +78,22 @@ def areas_list_json(_: HttpRequest) -> JsonResponse:
     return JsonResponse(
         [area.to_dict(include_geojson=False) for area in areas], safe=False
     )
+
+
+def available_years_biodiversity_index_json(_: HttpRequest) -> JsonResponse:
+    """A list of all years available for the biodiversity index"""
+    years = (
+        BiodiversityIndicatorObservation.objects.annotate(year=ExtractYear("date"))
+        .order_by("year")
+        .values_list("year", flat=True)
+        .distinct()
+    )
+    return JsonResponse(list(years), safe=False)
+
+
+def available_groups_biodiversity_index_json(_: HttpRequest) -> JsonResponse:
+    groups = BiodiversityIndicatorSpecies.SPECIES_GROUP_CHOICES
+
+    groups_as_objects = [{"id": group[0], "name": group[1]} for group in groups]
+
+    return JsonResponse(groups_as_objects, safe=False)
