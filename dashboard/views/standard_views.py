@@ -64,7 +64,7 @@ def area_geojson(_: HttpRequest, id: int):
     return HttpResponse(serialize("geojson", [area]), content_type="application/json")
 
 
-def areas_list_json(request: HttpRequest) -> JsonResponse:
+def areas_list_json(_: HttpRequest) -> JsonResponse:
     """A list of all areas available"""
     areas = Area.objects.all()
 

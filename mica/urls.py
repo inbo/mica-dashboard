@@ -57,6 +57,11 @@ urlpatterns = [
         name="dashboard-api-mvt-tiles-occurrences-water",
     ),
     path(
+        "api/tiles_areas/<int:zoom>/<int:x>/<int:y>.mvt",
+        views.mvt_tiles_areas,
+        name="dashboard-api-mvt-tiles-areas",
+    ),
+    path(
         "api/occ_min_max_in_grid/",
         views.occurrence_min_max_in_hex_grid,
         name="dashboard-api-min-max-in-grid",

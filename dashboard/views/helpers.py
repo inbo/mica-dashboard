@@ -3,7 +3,7 @@ from datetime import datetime
 
 from django.http import HttpRequest, QueryDict
 from django.contrib.gis.db.models.aggregates import Union as AggregateUnion
-from typing import List
+from typing import List, Optional
 
 from dashboard.models import Occurrence, Area
 
@@ -13,7 +13,7 @@ def readable_string(input_string: str) -> str:
     return " ".join(input_string.replace("\n", "").split())
 
 
-def extract_int_request(request, param_name) -> int:
+def extract_int_request(request, param_name) -> Optional[int]:
     """Returns an integer, or None if the parameter doesn't exist or is 'null'"""
     val = extract_string_request(request, param_name)
     if val is None:

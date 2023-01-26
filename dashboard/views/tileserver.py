@@ -6,7 +6,12 @@ from django.views.decorators.cache import cache_page
 
 from jinjasql import JinjaSql
 
-from .helpers import readable_string, extract_int_request, filters_from_request
+from .helpers import (
+    readable_string,
+    extract_int_request,
+    filters_from_request,
+    extract_array_request,
+)
 from ..models import Occurrence, Area, FishnetSquare
 
 AREAS_TABLE_NAME = Area.objects.model._meta.db_table
@@ -265,6 +270,45 @@ def mvt_tiles_occurrences_for_water(request, zoom, x, y):
         sql_params["start_date"] = start_date.strftime(DB_DATE_EXCHANGE_FORMAT_PYTHON)
     if end_date:
         sql_params["end_date"] = end_date.strftime(DB_DATE_EXCHANGE_FORMAT_PYTHON)
+
+    return HttpResponse(
+        _mvt_query_data(sql_template, sql_params),
+        content_type="application/vnd.mapbox-vector-tile",
+    )
+
+
+def mvt_tiles_areas(request, zoom, x, y):
+    """Tile server, showing MICA areas with biodiversity richness attributes."""
+    year = extract_int_request(request, "year")
+    species_group = extract_array_request(request, "speciesGroup")
+
+    sql_template = readable_string(
+        """
+        WITH 
+        alleareas AS (
+            SELECT mpoly AS geom, count(*) AS observations_count, count(DISTINCT species_id) AS species_count
+            FROM dashboard_area AS areas, dashboard_biodiversityindicatorobservation AS obs, dashboard_biodiversityindicatorspecies AS species
+            WHERE
+            obs.species_id = species.id AND
+            species.species_group = 'BI' AND
+            {% if year %}
+                EXTRACT('year' FROM obs.date) = {{ year }} AND
+            {% endif %}
+            st_within(obs.location, areas.mpoly) AND
+            mpoly && ST_TileEnvelope({{ zoom }}, {{ x }}, {{ y }}) AND
+            areas.id != 1
+            GROUP BY areas.mpoly
+        ), mvtgeom AS (SELECT ST_AsMVTGeom(geom, ST_TileEnvelope({{ zoom }}, {{ x }}, {{ y }})) AS geom, observations_count, species_count FROM alleareas)
+        SELECT st_asmvt(mvtgeom.*) FROM mvtgeom;
+        """
+    )
+
+    sql_params = {
+        "year": year,
+        "zoom": zoom,
+        "x": x,
+        "y": y,
+    }
 
     return HttpResponse(
         _mvt_query_data(sql_template, sql_params),
