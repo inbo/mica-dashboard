@@ -203,6 +203,11 @@ Vue.component('dashboard-map', {
 
         'overlayServerUrl': String,
         'overlayId': null,
+
+        'showBiodiversityRichness': Boolean,
+        'selectedYearsRichness': Array,
+        'selectedGroupsRichness': Array,
+        'tileServerUrlTemplateRichness': String,
     },
     data: function () {
         return {

@@ -94,6 +94,21 @@
                                v-model="showBiodiversityRichness">
                         <label class="col-form-label col-form-label-sm" for="showBiodiversityRichness">Show biodiversity richness in MICA areas</label>
                     </div>
+
+                    <div v-if="showBiodiversityRichness">
+                        <p>Years: </p>
+                        <div v-for="year in availableYearsRichness">
+                            <input type="checkbox" :id="'y_' + year" :value="year" v-model="selectedYearsRichness">
+                            <label :for="'y_' + year">[[ year ]]</label>
+                        </div>
+
+                        <p>Species: </p>
+                        <div v-for="group in availableGroupsRichness">
+                            <input type="checkbox" :id="'g_' + group.id" :value="group.id" v-model="selectedGroupsRichness">
+                            <label :for="'g_' + group.id">[[ group.name ]]</label>
+                        </div>
+                    </div>
+
                 </form>
             </div>
 
@@ -134,7 +149,6 @@
 
                 <hr>
 
-
                 <dashboard-occurrence-counter :filters="selectedFilters"
                                               :counter-url="endpoints.counterUrl"></dashboard-occurrence-counter>
 
@@ -149,6 +163,11 @@
                         :data-layer-opacity="dataLayerOpacity"
                         :overlay-id="selectedOverlayId"
                         :map-data-type="mapDataType"
+
+                        :show-biodiversity-richness="showBiodiversityRichness"
+                        :selected-years-richness="selectedYearsRichness"
+                        :selected-groups-richness="selectedGroupsRichness"
+                        :tile-server-url-template-richness="endpoints.tileServerUrlTemplateBiodiversityIndex"
                 ></dashboard-map>
 
                 <h2>Table view</h2>
@@ -179,12 +198,15 @@
                             availableDatasetsUrl: "{% url 'dashboard-api-available-datasets' %}",
                             availableSpeciesUrl: "{% url 'dashboard-api-available-species' %}",
                             availableOverlaysUrl: "{% url 'dashboard-api-available-areas' %}",
+                            availableYearsBiodiversityIndex: "{% url 'dashboard-api-available-years-biodiversity-index' %}",
+                            availableGroupsBiodiversityIndex: "{% url 'dashboard-api-available-groups-biodiversity-index' %}",
                             areaGeojsonUrl: "{% url 'dashboard-api-area-geojson' id=1 %}".replace('1', '{id}'),
                             minMaxOccCountUrl: "{% url 'dashboard-api-min-max-in-grid' %}",
                             counterUrl: "{% url 'dashboard-api-occurrences-counter' %}",
                             occurrencesJsonUrl: "{% url 'dashboard-api-occurrences-json' %}",
                             tileServerUrlTemplateOccurrences: "{% tile_server_url_template 'dashboard-api-mvt-tiles-occurrences' %}",
-                            tileServerUrlTemplateOccurrencesForWater: "{% tile_server_url_template 'dashboard-api-mvt-tiles-occurrences-water' %}"
+                            tileServerUrlTemplateOccurrencesForWater: "{% tile_server_url_template 'dashboard-api-mvt-tiles-occurrences-water' %}",
+                            tileServerUrlTemplateBiodiversityIndex: "{% tile_server_url_template 'dashboard-api-mvt-tiles-areas' %}"
                         },
 
                         availableDatasets: [],
@@ -197,6 +219,10 @@
                         mapDataType: "occurrences", // occurrences | occurrencesForWater
 
                         showBiodiversityRichness: false,
+                        availableYearsRichness: [],
+                        selectedYearsRichness: [],
+                        availableGroupsRichness: [],
+                        selectedGroupsRichness: [],
                     }
                 },
                 watch: {
@@ -213,6 +239,8 @@
                     this.populateDatasetSelect();
                     this.populateSpeciesSelect();
                     this.populateOverlaysSelect();
+                    this.populateAvailableYearsRichness();
+                    this.populateAvailableGroupsRichness();
                 },
                 methods: {
                     firstDayInPreviousMonth() {
@@ -225,6 +253,26 @@
                         const date = new Date();
                         date.setDate(0);
                         return date;
+                    },
+                    populateAvailableYearsRichness: function() {
+                        var vm = this;
+                        $.ajax({
+                            url: this.endpoints.availableYearsBiodiversityIndex,
+                        }).done(function (data) {
+                            vm.availableYearsRichness = data;
+                            // set the default value
+                            vm.selectedYearsRichness = data;
+                        })
+                    },
+                    populateAvailableGroupsRichness: function() {
+                        var vm = this;
+                        $.ajax({
+                            url: this.endpoints.availableGroupsBiodiversityIndex,
+                        }).done(function (data) {
+                            vm.availableGroupsRichness = data;
+                            // set the default value
+                            vm.selectedGroupsRichness = data.map(group => group.id);
+                        })
                     },
                     populateSpeciesSelect: function () {
                         var vm = this;
