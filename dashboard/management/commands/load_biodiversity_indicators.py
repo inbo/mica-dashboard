@@ -10,7 +10,6 @@ from dwca.read import DwCAReader
 from dashboard.models import (
     BiodiversityIndicatorObservation,
     BiodiversityIndicatorSpecies,
-    # BiodiversityIndicatorSpecies,
 )
 
 

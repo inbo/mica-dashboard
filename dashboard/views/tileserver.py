@@ -15,6 +15,8 @@ from .helpers import (
 )
 from ..models import Occurrence, Area, FishnetSquare
 
+TILE_SERVER_CACHING_DURATION = 60 * 60 * 8  # 8 hours
+
 AREAS_TABLE_NAME = Area.objects.model._meta.db_table
 OCCURRENCES_TABLE_NAME = Occurrence.objects.model._meta.db_table
 FISHNET_TABLE_NAME = FishnetSquare.objects.model._meta.db_table
@@ -120,6 +122,7 @@ JINJASQL_FRAGMENT_AGGREGATED_HEX_GRID = Template(
 )
 
 
+@cache_page(TILE_SERVER_CACHING_DURATION)
 def occurrence_min_max_in_hex_grid(request):
     """Return the min, max occurrences count per hexagon, according to the zoom level. JSON format.
 
@@ -168,6 +171,7 @@ def occurrence_min_max_in_hex_grid(request):
         return JsonResponse({"min": r[0], "max": r[1]})
 
 
+@cache_page(TILE_SERVER_CACHING_DURATION)
 def mvt_tiles_hex_aggregated_occurrence(request, zoom, x, y):
     """Tile server, showing occurrences aggregated by hexagon squares. Filters are honoured."""
     (
@@ -233,7 +237,7 @@ JINJASQL_FRAGMENT_AGGREGATED_WATER_GRID = Template(
 )
 
 
-@cache_page(60 * 60 * 6)
+@cache_page(TILE_SERVER_CACHING_DURATION)
 def mvt_tiles_occurrences_for_water(request, zoom, x, y):
     (
         dataset_id,
@@ -278,6 +282,7 @@ def mvt_tiles_occurrences_for_water(request, zoom, x, y):
     )
 
 
+@cache_page(TILE_SERVER_CACHING_DURATION)
 def mvt_tiles_areas(request, zoom, x, y):
     """Tile server, showing MICA areas with biodiversity richness attributes."""
     years = extract_int_array_request(request, "years[]")
