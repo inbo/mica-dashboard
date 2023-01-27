@@ -304,7 +304,33 @@ Vue.component('dashboard-map', {
         waterScaleOccurrencesForWater: function () {
             return d3.scaleLinear().domain([this.minW, this.maxW]).clamp(true);
         },
+        colorScaleBiodiversity: function () {
+            return d3.scaleSequentialLog(d3.interpolateGreens)
+                .domain([1, 100])
+        },
+        biodiversityTilesLayerStyleFunction: function () {
+            var vm = this;
+            return function (feature) {
+                const numberOfSpecies = feature.properties_.species_count;
 
+                let textValue = numberOfSpecies.toFixed(2);
+                const fillColor = vm.colorScaleBiodiversity(numberOfSpecies);
+
+                return new ol.style.Style({
+                    stroke: new ol.style.Stroke({
+                        color: 'black',
+                        width: 1,
+                    }),
+                    fill: new ol.style.Fill({
+                        color: fillColor,
+                    }),
+                    text: new ol.style.Text({
+                        text: textValue,
+                        fill: new ol.style.Fill({color: vm.legibleColor(fillColor)})
+                    })
+                })
+            }
+        },
         occurrencesForWaterTilesLayerStyleFunction: function () {
             var vm = this;
             return function (feature) {
@@ -399,7 +425,7 @@ Vue.component('dashboard-map', {
 
         replaceVectorTilesBiodiversityLayer: function () {
             this.map.removeLayer(this.biodiversityVectorTilesLayer);
-            this.biodiversityVectorTilesLayer = this.createVectorTilesBiodiversityLayer(this.tileServerUrlTemplateRichness, 2);
+            this.biodiversityVectorTilesLayer = this.createVectorTilesBiodiversityLayer(this.tileServerUrlTemplateRichness, this.biodiversityTilesLayerStyleFunction, 2);
             //console.log("passe", this.biodiversityVectorTilesLayer);
             this.map.addLayer(this.biodiversityVectorTilesLayer);
 
@@ -410,7 +436,7 @@ Vue.component('dashboard-map', {
             return d3.hsl(color).l > 0.5 ? "#000" : "#fff"
         },
 
-        createVectorTilesBiodiversityLayer: function (tileServerUrlTemplate, zIndex) {
+        createVectorTilesBiodiversityLayer: function (tileServerUrlTemplate, styleFunction, zIndex) {
             let vm = this;
 
             const yearsParams = this.selectedYearsRichness.map(function(el) {
@@ -426,6 +452,7 @@ Vue.component('dashboard-map', {
                     format: new ol.format.MVT(),
                     url: tileServerUrlTemplate + "?" + yearsParams + "&" + speciesGroupParams,
                 }),
+                style: styleFunction,
                 zIndex: zIndex,
             });
 
