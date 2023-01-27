@@ -306,7 +306,7 @@ Vue.component('dashboard-map', {
         },
         colorScaleBiodiversity: function () {
             return d3.scaleSequentialLog(d3.interpolateGreens)
-                .domain([1, 100])
+                .domain([1, 50])
         },
         biodiversityTilesLayerStyleFunction: function () {
             var vm = this;
