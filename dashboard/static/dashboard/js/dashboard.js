@@ -340,20 +340,24 @@ Vue.component('dashboard-map', {
 
                 const ratsPerKmWaterway = w === 0 ? 0 : r / ( w / 1000 );
 
-                let textValue = ratsPerKmWaterway.toFixed(2);
                 const fillColorRgbString = vm.colorScaleOccurrencesForWater(ratsPerKmWaterway);
+                const fillColor = d3.color(fillColorRgbString);
+                const strokeColor = d3.color('grey');
+                const textColor = vm.legibleColor(fillColorRgbString);
+
+                const textValue = ratsPerKmWaterway.toFixed(2);
 
                 return new ol.style.Style({
                     stroke: new ol.style.Stroke({
-                        color: 'black',
+                        color: vm.addOpacityToColor(strokeColor),
                         width: 1,
                     }),
                     fill: new ol.style.Fill({
-                        color: vm.addOpacityToColor(d3.color(fillColorRgbString))
+                        color: vm.addOpacityToColor(fillColor)
                     }),
                     text: new ol.style.Text({
                         text: textValue,
-                        fill: new ol.style.Fill({color: vm.addOpacityToColor(vm.legibleColor(fillColorRgbString))})
+                        fill: new ol.style.Fill({color: vm.addOpacityToColor(textColor)})
                     })
                 })
             }
@@ -363,32 +367,29 @@ Vue.component('dashboard-map', {
             var vm = this;
             return function (feature) {
                 const fillColorRgbString = vm.colorScaleOccurrences(feature.properties_.count);
+                const fillColor = d3.color(fillColorRgbString);
+                const strokeColor = d3.color('grey')
+                const textColor = vm.legibleColor(fillColorRgbString);
+
                 const textValue = feature.properties_.count.toString();
 
                 return new ol.style.Style({
                     stroke: new ol.style.Stroke({
-                        color: 'grey',
+                        color: vm.addOpacityToColor(strokeColor),
                         width: 1,
                     }),
                     fill: new ol.style.Fill({
-                        color: vm.addOpacityToColor(d3.color(fillColorRgbString)),
+                        color: vm.addOpacityToColor(fillColor),
                     }),
                     text: new ol.style.Text({
                         text: textValue,
-                        fill: new ol.style.Fill({color: vm.addOpacityToColor(vm.legibleColor(fillColorRgbString))})
+                        fill: new ol.style.Fill({color: vm.addOpacityToColor(textColor)})
                     })
                 })
             }
         }
     },
     methods: {
-        getWaterMapScoresSimilarity: function(ratsScore, waterScore) {
-            // Apply scales to both scores, so we have values between 0 and 1
-            const ratsScoreScaled = this.ratScaleOccurrencesForWater(ratsScore)
-            const waterScoreScaled = this.waterScaleOccurrencesForWater(waterScore)
-            // Check how similar they are (between 0 and 1 too)
-            return (1 - Math.abs(ratsScoreScaled - waterScoreScaled));
-        },
         setRatsTilesLayerVisbilility: function (selectedDataType) {
             if (selectedDataType === 'occurrences') {
                 this.occurrencesVectorTilesLayer.setVisible(true);
