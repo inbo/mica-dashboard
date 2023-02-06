@@ -1,6 +1,7 @@
 from django.core.paginator import Paginator
 from django.core.serializers import serialize
-from django.db.models.functions import ExtractYear
+from django.db.models import Count
+from django.db.models.functions import ExtractYear, TruncMonth
 from django.http import JsonResponse, HttpRequest, HttpResponse
 from django.shortcuts import render, get_object_or_404
 
@@ -23,17 +24,17 @@ def index(request):
     )
 
 
-def available_datasets(request):
+def available_datasets(_request: HttpRequest) -> JsonResponse:
     data = list(Dataset.objects.all().values())
     return JsonResponse(data, safe=False)
 
 
-def available_species(request):
+def available_species(_request: HttpRequest) -> JsonResponse:
     data = list(Species.objects.all().values())
     return JsonResponse(data, safe=False)
 
 
-def occurrences_json(request):
+def occurrences_json(request: HttpRequest) -> JsonResponse:
     order = request.GET.get("order")
     limit = extract_int_request(request, "limit")
     page_number = extract_int_request(request, "page_number")
@@ -55,13 +56,38 @@ def occurrences_json(request):
     )
 
 
-def occurrences_counter(request):
+def occurrences_counter(request: HttpRequest) -> JsonResponse:
     """Count the occurrences according to the filters received
 
     filters: same format than other endpoints: getting occurrences, map tiles, ...
     """
     qs = request_to_occurrences_qs(request)
     return JsonResponse({"count": qs.count()})
+
+
+def occurrences_monthly_histogram(request: HttpRequest) -> JsonResponse:
+    """Give the (filtered) number of occurrences per month
+
+    filters: same format than other endpoints: getting occurrences, map tiles, ...
+
+    Output is chronologically ordered
+    """
+    qs = request_to_occurrences_qs(request)
+
+    histogram_data = (
+        qs.annotate(month=TruncMonth("date"))
+        .values("month")
+        .annotate(total=Count("id"))
+        .order_by("month")
+    )
+
+    return JsonResponse(
+        [
+            {"year": e["month"].year, "month": e["month"].month, "count": e["total"]}
+            for e in histogram_data
+        ],
+        safe=False,
+    )
 
 
 def area_geojson(_: HttpRequest, id: int):

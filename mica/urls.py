@@ -55,6 +55,11 @@ urlpatterns = [
         views.occurrences_counter,
         name="dashboard-api-occurrences-counter",
     ),
+    path(
+        "api/occurences_monthly_count/",
+        views.occurrences_monthly_histogram,
+        name="dashboard-api-occurrences-monthly-count",
+    ),
     path("api/area/<int:id>", views.area_geojson, name="dashboard-api-area-geojson"),
     path(
         "api/tiles_hex_aggregated/<int:zoom>/<int:x>/<int:y>.mvt",
