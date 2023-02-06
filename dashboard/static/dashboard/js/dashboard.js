@@ -262,10 +262,10 @@ Vue.component('dashboard-map', {
         dataLayerOpacity: {
             handler: function (val) {
                 if (this.occurrencesVectorTilesLayer) {
-                    this.occurrencesVectorTilesLayer.setOpacity(val);
+                    this.restyleOccurrencesVectorTilesLayer();
                 }
                 if (this.occurrencesForWaterVectorTilesLayer) {
-                    this.occurrencesForWaterVectorTilesLayer.setOpacity(val);
+                    this.restyleOccurrencesForWaterVectorTilesLayer();
                 }
             }
         },
@@ -341,7 +341,7 @@ Vue.component('dashboard-map', {
                 const ratsPerKmWaterway = w === 0 ? 0 : r / ( w / 1000 );
 
                 let textValue = ratsPerKmWaterway.toFixed(2);
-                const fillColor = vm.colorScaleOccurrencesForWater(ratsPerKmWaterway);
+                const fillColorRgbString = vm.colorScaleOccurrencesForWater(ratsPerKmWaterway);
 
                 return new ol.style.Style({
                     stroke: new ol.style.Stroke({
@@ -349,11 +349,11 @@ Vue.component('dashboard-map', {
                         width: 1,
                     }),
                     fill: new ol.style.Fill({
-                        color: fillColor,
+                        color: vm.addOpacityToColor(d3.color(fillColorRgbString))
                     }),
                     text: new ol.style.Text({
                         text: textValue,
-                        fill: new ol.style.Fill({color: vm.legibleColor(fillColor)})
+                        fill: new ol.style.Fill({color: vm.addOpacityToColor(vm.legibleColor(fillColorRgbString))})
                     })
                 })
             }
@@ -362,7 +362,7 @@ Vue.component('dashboard-map', {
         occurrencesVectorTilesLayerStyleFunction: function () {
             var vm = this;
             return function (feature) {
-                const fillColor = vm.colorScaleOccurrences(feature.properties_.count);
+                const fillColorRgbString = vm.colorScaleOccurrences(feature.properties_.count);
                 const textValue = feature.properties_.count.toString();
 
                 return new ol.style.Style({
@@ -371,11 +371,11 @@ Vue.component('dashboard-map', {
                         width: 1,
                     }),
                     fill: new ol.style.Fill({
-                        color: fillColor
+                        color: vm.addOpacityToColor(d3.color(fillColorRgbString)),
                     }),
                     text: new ol.style.Text({
                         text: textValue,
-                        fill: new ol.style.Fill({color: vm.legibleColor(fillColor)})
+                        fill: new ol.style.Fill({color: vm.addOpacityToColor(vm.legibleColor(fillColorRgbString))})
                     })
                 })
             }
@@ -410,6 +410,11 @@ Vue.component('dashboard-map', {
                 this.occurrencesVectorTilesLayer.setStyle(this.occurrencesVectorTilesLayerStyleFunction)
             }
         },
+        restyleOccurrencesForWaterVectorTilesLayer: function () {
+            if (this.occurrencesForWaterVectorTilesLayer) {
+                this.occurrencesForWaterVectorTilesLayer.setStyle(this.occurrencesForWaterTilesLayerStyleFunction)
+            }
+        },
         replaceVectorTilesRatsLayers: function () {
             this.map.removeLayer(this.occurrencesVectorTilesLayer);
             this.map.removeLayer(this.occurrencesForWaterVectorTilesLayer);
@@ -433,7 +438,17 @@ Vue.component('dashboard-map', {
         },
 
         legibleColor: function (color) {
-            return d3.hsl(color).l > 0.5 ? "#000" : "#fff"
+            // TODO: change input parameter type to d3.color (for consistency)
+            // in: rgb string
+            // out: d3.color object
+            return d3.hsl(color).l > 0.5 ? d3.color("black") : d3.color("white");
+        },
+
+        addOpacityToColor: function (color) {
+            // in: d3.color object
+            // out: hex8 string
+            color.opacity = this.dataLayerOpacity;
+            return color.formatHex8();
         },
 
         createVectorTilesBiodiversityLayer: function (tileServerUrlTemplate, styleFunction, zIndex) {
@@ -466,7 +481,6 @@ Vue.component('dashboard-map', {
                     format: new ol.format.MVT(),
                     url: tileServerUrlTemplate + '?' + $.param(vm.filters),
                 }),
-                opacity: vm.dataLayerOpacity,
                 style: styleFunction,
                 zIndex: zIndex
             });
