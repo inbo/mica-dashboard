@@ -6,6 +6,52 @@ function truncateString(str, num) {
   }
 }
 
+Vue.component('dashboard-histogram', {
+    props: {
+        'filters': {
+            type: Object,
+            required: true
+        },
+        'monthlyCountersUrl': {
+            type: String,
+            required: true
+        },
+    },
+    data: function () {
+        return {
+            histogramDataFromServer: [],
+        }
+    },
+    methods: {
+        loadHistogramData: function (filters) {
+            let vm = this;
+
+            // The histogram has to drop the date filtering parameters
+            const strippedFilters = (({ startDate, endDate, ...o }) => o)(filters);
+
+            $.ajax({
+                url: this.monthlyCountersUrl,
+                data: strippedFilters
+            }).done(function (data) {
+                console.log(data);
+            })
+        }
+    },
+    watch: {
+        'filters': {
+            deep: true,
+            immediate: true,
+            handler: function (filters) {
+                this.loadHistogramData(filters);
+            }
+        }
+    },
+    template: `
+        <div class="chart-container">
+            <h1>Monthly occurrence count</h1>
+        </div>`,
+});
+
 Vue.component('dashboard-occurrence-counter', {
     props: {
         'filters': Object,

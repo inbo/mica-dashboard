@@ -152,6 +152,8 @@
                 <dashboard-occurrence-counter :filters="selectedFilters"
                                               :counter-url="endpoints.counterUrl"></dashboard-occurrence-counter>
 
+                <dashboard-histogram :filters="selectedFilters" :monthly-counters-url="endpoints.occurrencesPerMonthUrl"></dashboard-histogram>
+
                 <h2>Map view</h2>
                 <dashboard-map
                         :initial-lat="51.58" :initial-lon="4.67" :initial-zoom="initialZoomLevel"
@@ -204,6 +206,7 @@
                             minMaxOccCountUrl: "{% url 'dashboard-api-min-max-in-grid' %}",
                             counterUrl: "{% url 'dashboard-api-occurrences-counter' %}",
                             occurrencesJsonUrl: "{% url 'dashboard-api-occurrences-json' %}",
+                            occurrencesPerMonthUrl: "{% url 'dashboard-api-occurrences-monthly-count' %}",
                             tileServerUrlTemplateOccurrences: "{% tile_server_url_template 'dashboard-api-mvt-tiles-occurrences' %}",
                             tileServerUrlTemplateOccurrencesForWater: "{% tile_server_url_template 'dashboard-api-mvt-tiles-occurrences-water' %}",
                             tileServerUrlTemplateBiodiversityIndex: "{% tile_server_url_template 'dashboard-api-mvt-tiles-areas' %}"
