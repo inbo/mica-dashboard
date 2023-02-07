@@ -1,10 +1,129 @@
 function truncateString(str, num) {
-  if (str.length > num) {
-    return str.slice(0, num) + "...";
-  } else {
-    return str;
-  }
+    if (str.length > num) {
+        return str.slice(0, num) + "...";
+    } else {
+        return str;
+    }
 }
+
+const range = (start, end) => Array.from({length: end - start}, (v, k) => k + start);
+
+Vue.component('bar-chart', {
+    props: {
+        barData: {
+            // Data must be sorted before being passed to the chart
+            required: true,
+            type: Array,
+        },
+    },
+    data: function () {
+        return {
+            svgStyle: {
+                margin: {
+                    top: 10,
+                    right: 30,
+                    bottom: 30,
+                    left: 40,
+                },
+                width: 1116,
+                height: 170,
+            },
+            numberOfMonths: 36,
+        };
+    },
+    computed: {
+        truncatedBarData() {
+            return this.barData.filter(e =>
+                this.xScaleDomain.includes(e.yearMonth)
+            );
+        },
+        xScaleDomain() {
+            function* months(interval) {
+                let cursor = interval.start.startOf("month");
+                while (cursor < interval.end) {
+                    yield cursor;
+                    cursor = cursor.plus({months: 1});
+                }
+            }
+
+            const interval = luxon.Interval.fromDateTimes(this.startDate, this.endDate);
+
+            return Array.from(months(interval)).map((m) =>
+                this.datetimeToMonthStr(m)
+            );
+        },
+        xScale() {
+            return d3.scaleBand()
+                .range([0, this.svgInnerWidth])
+                .paddingInner(0.3)
+                .domain(this.xScaleDomain);
+        },
+        yScale() {
+            return d3.scaleLinear()
+                .rangeRound([this.svgInnerHeight, 0])
+                .domain([0, this.dataMax]);
+        },
+        endDate() {
+            return luxon.DateTime.now();
+        },
+        startDate() {
+            return this.endDate.minus({month: this.numberOfMonths});
+        },
+        startMonth() {
+            return this.xScaleDomain[0];
+        },
+        endMonth() {
+            return this.xScaleDomain[this.xScaleDomain.length - 1];
+        },
+        svgInnerHeight: function () {
+            return (
+                this.svgStyle.height -
+                this.svgStyle.margin.top -
+                this.svgStyle.margin.bottom
+            );
+        },
+        svgInnerWidth: function () {
+            return (
+                this.svgStyle.width -
+                this.svgStyle.margin.left -
+                this.svgStyle.margin.right
+            );
+        },
+        dataMax() {
+            const maxVal = d3.max(
+                this.truncatedBarData,
+                d => {
+                    return d.count;
+                }
+            );
+            return maxVal ? maxVal : 0;
+        },
+    },
+    methods: {
+        datetimeToMonthStr(d) {
+            return d.year + "-" + d.month;
+        },
+    },
+    template: `
+        <svg
+            class="d-block mx-auto"
+            :width="svgStyle.width"
+            :height="svgStyle.height"
+        >
+        <g :transform="'translate(' + svgStyle.margin.left.toString() + ', ' +  svgStyle.margin.top.toString() + ')'">
+            <rect
+                v-for="(barDataEntry, index) in truncatedBarData"
+                :key="barDataEntry.yearMonth"
+                :x="xScale(barDataEntry.yearMonth)"
+                :y="yScale(barDataEntry.count)"
+                :width="xScale.bandwidth()"
+                :height="svgInnerHeight - yScale(barDataEntry.count)"
+                :a="barDataEntry.yearMonth"
+            ></rect>
+        </g>
+            
+        </svg>`,
+});
 
 Vue.component('dashboard-histogram', {
     props: {
@@ -22,18 +141,72 @@ Vue.component('dashboard-histogram', {
             histogramDataFromServer: [],
         }
     },
+    computed: {
+        preparedHistogramData: function () {
+            return this.histogramDataFromServer.map((e) => {
+                return {
+                    yearMonth: e.year + "-" + e.month,
+                    count: e.count,
+                };
+            });
+        },
+    },
     methods: {
+        buildEmptyHistogramArray: function (rangeStart) {
+            // first entry: first month with data from server
+            // Last entry: current month
+            let data = [];
+            const yearsRange = range(rangeStart.year, luxon.DateTime.now().year + 1);
+            yearsRange.forEach((currentYear, yearIndex) => {
+                const startMonth = yearIndex === 0 ? rangeStart.month : 1;
+                const endMonth =
+                    yearIndex === yearsRange.length - 1 ? luxon.DateTime.now().month : 12;
+
+                for (
+                    let currentMonth = startMonth;
+                    currentMonth <= endMonth;
+                    currentMonth++
+                ) {
+                    data.push({
+                        year: currentYear,
+                        month: currentMonth,
+                        count: 0,
+                    });
+                }
+            });
+            return data;
+        },
         loadHistogramData: function (filters) {
             let vm = this;
 
             // The histogram has to drop the date filtering parameters
-            const strippedFilters = (({ startDate, endDate, ...o }) => o)(filters);
+            const strippedFilters = (({startDate, endDate, ...o}) => o)(filters);
 
             $.ajax({
                 url: this.monthlyCountersUrl,
                 data: strippedFilters
             }).done(function (data) {
-                console.log(data);
+                if (data.length === 0) {
+                    vm.histogramDataFromServer = [];
+                } else {
+                    // Build an empty range (padding)
+                    let emptyHistogramData = vm.buildEmptyHistogramArray(
+                        data[0]
+                    );
+
+                    // Populate it
+                    data.forEach(serverEntry => {
+                        const index = emptyHistogramData.findIndex(function (elem) {
+                            return (
+                                elem.year === serverEntry.year &&
+                                elem.month === serverEntry.month
+                            );
+                        });
+                        emptyHistogramData[index].count = serverEntry.count;
+                    });
+
+                    vm.histogramDataFromServer = emptyHistogramData;
+                }
             })
         }
     },
@@ -49,6 +222,7 @@ Vue.component('dashboard-histogram', {
     template: `
         <div class="chart-container">
             <h1>Monthly occurrence count</h1>
+            <bar-chart :bar-data="preparedHistogramData" />
         </div>`,
 });
 
@@ -99,13 +273,15 @@ Vue.component('occurrence-table-page', {
     computed: {
         preparedOccurrences: function () {
             // The occurrences, but formatted for display
-            return this.occurrences.map(o => ({...o, ...{
-                shortDatasetName: truncateString(o.datasetName, 20),
-                shortSpeciesName: o.speciesName.replace(/\([^\)\(]*\)/, ""), // Remove authorship (between parentheses)
-                recordType: o.isCatch ? "catch" : "observation",
-                occurrenceGbifUrl: "https://www.gbif.org/occurrence/" + o.gbifId,
-                datasetGbifUrl: "https://www.gbif.org/dataset/" + o.datasetKey,
-            }}))
+            return this.occurrences.map(o => ({
+                ...o, ...{
+                    shortDatasetName: truncateString(o.datasetName, 20),
+                    shortSpeciesName: o.speciesName.replace(/\([^\)\(]*\)/, ""), // Remove authorship (between parentheses)
+                    recordType: o.isCatch ? "catch" : "observation",
+                    occurrenceGbifUrl: "https://www.gbif.org/occurrence/" + o.gbifId,
+                    datasetGbifUrl: "https://www.gbif.org/dataset/" + o.datasetKey,
+                }
+            }))
         }
     },
     template: `<tbody>
@@ -384,7 +560,7 @@ Vue.component('dashboard-map', {
                 const r = feature.properties_.rats_score;
                 const w = feature.properties_.water_score;
 
-                const ratsPerKmWaterway = w === 0 ? 0 : r / ( w / 1000 );
+                const ratsPerKmWaterway = w === 0 ? 0 : r / (w / 1000);
 
                 const fillColorRgbString = vm.colorScaleOccurrencesForWater(ratsPerKmWaterway);
                 const fillColor = d3.color(fillColorRgbString);
@@ -445,7 +621,7 @@ Vue.component('dashboard-map', {
                 this.occurrencesVectorTilesLayer.setVisible(false);
             }
         },
-        setBiodiversityTilesLayerVisibility: function() {
+        setBiodiversityTilesLayerVisibility: function () {
             if (this.showBiodiversityRichness) {
                 this.biodiversityVectorTilesLayer.setVisible(true);
             } else {
@@ -501,11 +677,11 @@ Vue.component('dashboard-map', {
         createVectorTilesBiodiversityLayer: function (tileServerUrlTemplate, styleFunction, zIndex) {
             let vm = this;
 
-            const yearsParams = this.selectedYearsRichness.map(function(el) {
+            const yearsParams = this.selectedYearsRichness.map(function (el) {
                 return 'years[]=' + el;
             }).join('&');
 
-            const speciesGroupParams = this.selectedGroupsRichness.map(function(el) {
+            const speciesGroupParams = this.selectedGroupsRichness.map(function (el) {
                 return 'speciesGroups[]=' + el;
             }).join('&');
 
