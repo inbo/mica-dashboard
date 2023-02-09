@@ -245,6 +245,14 @@ Vue.component('dashboard-occurrence-counter', {
             'count': 0
         }
     },
+    computed: {
+        formattedCount: function () {
+            return new Intl.NumberFormat().format(this.count);
+        },
+        occurrencesPluralized: function () {
+            return this.count === 1 ? 'occurrence' : 'occurrences';
+        }
+    },
     methods: {
         updateCount: function (filters) {
             var vm = this;
@@ -266,7 +274,7 @@ Vue.component('dashboard-occurrence-counter', {
         }
     },
 
-    template: `<h5>{{ count }} occurrence(s) matching selection</h5>`
+    template: `<h4><span class="badge bg-warning" style="float: right">{{ formattedCount }} {{ occurrencesPluralized }} matching selection</span></h4>`
 });
 
 // A single page in the occurrence table
