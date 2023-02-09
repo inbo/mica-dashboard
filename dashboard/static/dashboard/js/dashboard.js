@@ -15,6 +15,10 @@ Vue.component('bar-chart', {
             required: true,
             type: Array,
         },
+        numberOfXTicks: {
+            type: Number,
+            default: 15,
+        },
     },
     data: function () {
         return {
@@ -25,7 +29,7 @@ Vue.component('bar-chart', {
                     bottom: 30,
                     left: 40,
                 },
-                width: 1116,
+                width: 1400,
                 height: 170,
             },
             numberOfMonths: 36,
@@ -69,12 +73,6 @@ Vue.component('bar-chart', {
         startDate() {
             return this.endDate.minus({month: this.numberOfMonths});
         },
-        startMonth() {
-            return this.xScaleDomain[0];
-        },
-        endMonth() {
-            return this.xScaleDomain[this.xScaleDomain.length - 1];
-        },
         svgInnerHeight: function () {
             return (
                 this.svgStyle.height -
@@ -104,6 +102,35 @@ Vue.component('bar-chart', {
             return d.year + "-" + d.month;
         },
     },
+    directives: {
+        yaxis: {
+            update(el, binding) {
+                const scaleFunction = binding.value.scale;
+
+                // Filter out non-integer values
+                const yAxisTicks = scaleFunction.ticks(4).filter(tick => Number.isInteger(tick));
+
+                // Create the axis and render it
+                const yAxis = d3.axisLeft(scaleFunction).tickValues(yAxisTicks)
+                yAxis(d3.select(el));
+            },
+        },
+        xaxis: {
+            update(el, binding) {
+                const scaleFunction = binding.value.scale;
+                const numberOfTicks = binding.value.ticks;
+                const numberofElems = scaleFunction.domain().length;
+                const moduloVal = Math.floor(numberofElems / numberOfTicks);
+
+                const d3Axis = d3.axisBottom(scaleFunction).tickValues(
+                    scaleFunction.domain().filter(function (d, i) {
+                        return !(i % moduloVal);
+                    })
+                );
+                d3Axis(d3.select(el));
+            },
+        },
+    },
     template: `
         <svg
             class="d-block mx-auto"
@@ -118,8 +145,14 @@ Vue.component('bar-chart', {
                 :y="yScale(barDataEntry.count)"
                 :width="xScale.bandwidth()"
                 :height="svgInnerHeight - yScale(barDataEntry.count)"
-                :a="barDataEntry.yearMonth"
+                :style="{ fill: 'rgb(36,45,102)' }"
             ></rect>
+            
+            <g v-yaxis="{ scale: yScale }" />
+            
+            <g :transform="'translate(0, ' + svgInnerHeight + ')'">
+                <g v-xaxis="{ scale: xScale, ticks: numberOfXTicks }" />
+            </g>
         </g>
             
         </svg>`,
@@ -221,7 +254,7 @@ Vue.component('dashboard-histogram', {
     },
     template: `
         <div class="chart-container">
-            <h1>Monthly occurrence count</h1>
+            <h2>Trend over time</h2>
             <bar-chart :bar-data="preparedHistogramData" />
         </div>`,
 });
