@@ -36,25 +36,8 @@ Vue.component('bar-chart', {
         };
     },
     computed: {
-        truncatedBarData() {
-            return this.barData.filter(e =>
-                this.xScaleDomain.includes(e.yearMonth)
-            );
-        },
         xScaleDomain() {
-            function* months(interval) {
-                let cursor = interval.start.startOf("month");
-                while (cursor < interval.end) {
-                    yield cursor;
-                    cursor = cursor.plus({months: 1});
-                }
-            }
-
-            const interval = luxon.Interval.fromDateTimes(this.startDate, this.endDate);
-
-            return Array.from(months(interval)).map((m) =>
-                this.datetimeToMonthStr(m)
-            );
+            return this.barData.map(e => e.yearMonth);
         },
         xScale() {
             return d3.scaleBand()
@@ -89,17 +72,12 @@ Vue.component('bar-chart', {
         },
         dataMax() {
             const maxVal = d3.max(
-                this.truncatedBarData,
+                this.barData,
                 d => {
                     return d.count;
                 }
             );
             return maxVal ? maxVal : 0;
-        },
-    },
-    methods: {
-        datetimeToMonthStr(d) {
-            return d.year + "-" + d.month;
         },
     },
     directives: {
@@ -139,7 +117,7 @@ Vue.component('bar-chart', {
         >
         <g :transform="'translate(' + svgStyle.margin.left.toString() + ', ' +  svgStyle.margin.top.toString() + ')'">
             <rect
-                v-for="(barDataEntry, index) in truncatedBarData"
+                v-for="(barDataEntry, index) in barData"
                 :key="barDataEntry.yearMonth"
                 :x="xScale(barDataEntry.yearMonth)"
                 :y="yScale(barDataEntry.count)"
@@ -213,11 +191,9 @@ Vue.component('dashboard-histogram', {
             let vm = this;
 
             // The histogram has to drop the date filtering parameters
-            const strippedFilters = (({startDate, endDate, ...o}) => o)(filters);
-
             $.ajax({
                 url: this.monthlyCountersUrl,
-                data: strippedFilters
+                data: filters
             }).done(function (data) {
                 if (data.length === 0) {
                     vm.histogramDataFromServer = [];
