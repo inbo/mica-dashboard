@@ -62,9 +62,14 @@ urlpatterns = [
     ),
     path("api/area/<int:id>", views.area_geojson, name="dashboard-api-area-geojson"),
     path(
-        "api/tiles_hex_aggregated/<int:zoom>/<int:x>/<int:y>.mvt",
-        views.mvt_tiles_hex_aggregated_occurrence,
+        "api/tiles/<int:zoom>/<int:x>/<int:y>.mvt",
+        views.mvt_tiles_occurrences,
         name="dashboard-api-mvt-tiles-occurrences",
+    ),
+    path(
+        "api/tiles_hex_aggregated/<int:zoom>/<int:x>/<int:y>.mvt",
+        views.mvt_tiles_hex_aggregated_occurrences,
+        name="dashboard-api-mvt-tiles-occurrences-hex",
     ),
     path(
         "api/tiles_occurrences_for_water/<int:zoom>/<int:x>/<int:y>.mvt",

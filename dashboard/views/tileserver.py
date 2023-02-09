@@ -172,7 +172,54 @@ def occurrence_min_max_in_hex_grid(request):
 
 
 @cache_page(TILE_SERVER_CACHING_DURATION)
-def mvt_tiles_hex_aggregated_occurrence(request, zoom, x, y):
+def mvt_tiles_occurrences(request, zoom, x, y):
+    """Tile server, showing non-aggregated occurrences, for high zoom levels. Filters are honoured."""
+    (
+        dataset_id,
+        species_id,
+        start_date,
+        end_date,
+        records_type,
+        area_ids,
+    ) = filters_from_request(request)
+
+    sql_template = readable_string(
+        Template(
+            """
+            WITH mvtgeom AS (
+                SELECT ST_AsMVTGeom(dashboard_filtered_occ.location, ST_TileEnvelope({{ zoom }}, {{ x }}, {{ y }})), dashboard_filtered_occ.gbif_id
+                FROM ($jinjasql_fragment_filter_occurrences) AS dashboard_filtered_occ
+            )
+            SELECT st_asmvt(mvtgeom.*) FROM mvtgeom;
+            """
+        ).substitute(
+            jinjasql_fragment_filter_occurrences=JINJASQL_FRAGMENT_FILTER_OCCURRENCES
+        )
+    )
+
+    sql_params = {
+        "dataset_id": dataset_id,
+        "species_id": species_id,
+        "area_ids": area_ids,
+        "records_type": records_type,
+        "zoom": zoom,
+        "x": x,
+        "y": y,
+    }
+
+    if start_date:
+        sql_params["start_date"] = start_date.strftime(DB_DATE_EXCHANGE_FORMAT_PYTHON)
+    if end_date:
+        sql_params["end_date"] = end_date.strftime(DB_DATE_EXCHANGE_FORMAT_PYTHON)
+
+    return HttpResponse(
+        _mvt_query_data(sql_template, sql_params),
+        content_type="application/vnd.mapbox-vector-tile",
+    )
+
+
+@cache_page(TILE_SERVER_CACHING_DURATION)
+def mvt_tiles_hex_aggregated_occurrences(request, zoom, x, y):
     """Tile server, showing occurrences aggregated by hexagon squares. Filters are honoured."""
     (
         dataset_id,
