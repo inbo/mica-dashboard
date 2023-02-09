@@ -549,7 +549,7 @@ Vue.component('dashboard-map', {
                 .domain([this.HexMinOccCount, this.HexMaxOccCount])
         },
         colorScaleOccurrencesForWater: function () {
-            return d3.scaleSequential(d3.interpolateReds)
+            return d3.scaleSequential(d3.interpolateCool)
                 .domain([0, this.maxRatsPerKmWaterway])
         },
 
@@ -597,16 +597,11 @@ Vue.component('dashboard-map', {
 
                 const fillColorRgbString = vm.colorScaleOccurrencesForWater(ratsPerKmWaterway);
                 const fillColor = d3.color(fillColorRgbString);
-                const strokeColor = d3.color('grey');
                 const textColor = vm.legibleColor(fillColorRgbString);
 
                 const textValue = ratsPerKmWaterway.toFixed(2);
 
                 return new ol.style.Style({
-                    stroke: new ol.style.Stroke({
-                        color: vm.addOpacityToColor(strokeColor),
-                        width: 1,
-                    }),
                     fill: new ol.style.Fill({
                         color: vm.addOpacityToColor(fillColor)
                     }),
