@@ -158,8 +158,9 @@
                 <dashboard-map
                         :initial-lat="51.58" :initial-lon="4.67" :initial-zoom="initialZoomLevel"
                         :min-max-url="endpoints.minMaxOccCountUrl"
-                        :tile-server-url-template-occurrences="endpoints.tileServerUrlTemplateOccurrences"
-                        :tile-server-url-template-occurrences-for-water="endpoints.tileServerUrlTemplateOccurrencesForWater"
+                        :tile-server-url-template-occurrences-aggregated="endpoints.tileServer.occurrencesAggregated"
+                        :tile-server-url-template-occurrences-simple="endpoints.tileServer.occurrencesSimple"
+                        :tile-server-url-template-occurrences-for-water="endpoints.tileServer.occurrencesForWater"
                         :overlay-server-url="endpoints.areaGeojsonUrl"
                         :filters="selectedFilters"
                         :data-layer-opacity="dataLayerOpacity"
@@ -169,7 +170,7 @@
                         :show-biodiversity-richness="showBiodiversityRichness"
                         :selected-years-richness="selectedYearsRichness"
                         :selected-groups-richness="selectedGroupsRichness"
-                        :tile-server-url-template-richness="endpoints.tileServerUrlTemplateBiodiversityIndex"
+                        :tile-server-url-template-richness="endpoints.tileServer.biodiversityIndex"
                 ></dashboard-map>
 
                 <h2>Table view</h2>
@@ -207,9 +208,18 @@
                             counterUrl: "{% url 'dashboard-api-occurrences-counter' %}",
                             occurrencesJsonUrl: "{% url 'dashboard-api-occurrences-json' %}",
                             occurrencesPerMonthUrl: "{% url 'dashboard-api-occurrences-monthly-count' %}",
-                            tileServerUrlTemplateOccurrences: "{% tile_server_url_template 'dashboard-api-mvt-tiles-occurrences' %}",
-                            tileServerUrlTemplateOccurrencesForWater: "{% tile_server_url_template 'dashboard-api-mvt-tiles-occurrences-water' %}",
-                            tileServerUrlTemplateBiodiversityIndex: "{% tile_server_url_template 'dashboard-api-mvt-tiles-areas' %}"
+                            tileServer: {
+                                // All are URL templates
+
+                                // Direct occurrences: aggregated hexagons for low zoom level, individual points for high zoom level
+                                occurrencesSimple: "{% tile_server_url_template 'dashboard-api-mvt-tiles-occurrences-simple' %}",
+                                occurrencesAggregated: "{% tile_server_url_template 'dashboard-api-mvt-tiles-occurrences-hex' %}",
+                                // 1km squares containing the number of occurrences per km of waterways
+                                occurrencesForWater: "{% tile_server_url_template 'dashboard-api-mvt-tiles-occurrences-water' %}",
+                                // Polygons representing MICA study areas with a biodiversity richness index
+                                biodiversityIndex: "{% tile_server_url_template 'dashboard-api-mvt-tiles-areas' %}"
+                            },
+
                         },
 
                         availableDatasets: [],

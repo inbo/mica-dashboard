@@ -64,7 +64,7 @@ urlpatterns = [
     path(
         "api/tiles/<int:zoom>/<int:x>/<int:y>.mvt",
         views.mvt_tiles_occurrences,
-        name="dashboard-api-mvt-tiles-occurrences",
+        name="dashboard-api-mvt-tiles-occurrences-simple",
     ),
     path(
         "api/tiles_hex_aggregated/<int:zoom>/<int:x>/<int:y>.mvt",

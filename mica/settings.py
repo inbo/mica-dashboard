@@ -125,24 +125,24 @@ GBIF_CATCHES_DATASET_KEY = [
 # A (writable by Django) directory where GBIF datasets are temporarily stored before their ingestion
 DATASET_TEMPORARY_DIR = os.path.join(BASE_DIR, "initial_datasets_temp")
 
-LOGGING = {
-    "version": 1,
-    "filters": {
-        "require_debug_true": {
-            "()": "django.utils.log.RequireDebugTrue",
-        }
-    },
-    "handlers": {
-        "console": {
-            "level": "DEBUG",
-            "filters": ["require_debug_true"],
-            "class": "logging.StreamHandler",
-        }
-    },
-    "loggers": {
-        "django.db.backends": {
-            "level": "DEBUG",
-            "handlers": ["console"],
-        }
-    },
-}
+# LOGGING = {
+#     "version": 1,
+#     "filters": {
+#         "require_debug_true": {
+#             "()": "django.utils.log.RequireDebugTrue",
+#         }
+#     },
+#     "handlers": {
+#         "console": {
+#             "level": "DEBUG",
+#             "filters": ["require_debug_true"],
+#             "class": "logging.StreamHandler",
+#         }
+#     },
+#     "loggers": {
+#         "django.db.backends": {
+#             "level": "DEBUG",
+#             "handlers": ["console"],
+#         }
+#     },
+# }

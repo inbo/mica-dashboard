@@ -426,9 +426,10 @@ Vue.component('dashboard-table', {
 Vue.component('dashboard-map', {
     props: {
         'minMaxUrl': String,
-        'tileServerUrlTemplateOccurrences': String,
+        'tileServerUrlTemplateOccurrencesSimple': String,
+        'tileServerUrlTemplateOccurrencesAggregated': String,
         'tileServerUrlTemplateOccurrencesForWater': String,
-        'mapDataType': String, // occurrences | occurrencesForWater. Will impact the tile server url to use + display style
+        'mapDataType': String, // occurrences | occurrencesForWater. Will impact the tile server url to use + display style. occurrences are shown aggregated or not, depending on the zoom level
 
         'initialLat': Number,
         'initialLon': Number,
@@ -454,19 +455,13 @@ Vue.component('dashboard-map', {
             HexMinOccCount: 1,
             HexMaxOccCount: 1,
 
-            occurrencesVectorTilesLayer: null,
+            aggregatedOccurrencesVectorTilesLayer: null,
+            simpleOccurrencesVectorTilesLayer: null,
             occurrencesForWaterVectorTilesLayer: null,
             biodiversityVectorTilesLayer: null,
 
-            // TODO: make this dynamic
-            /*minR: 0, // Water map: minimum rat score per square in the whole data set (! depends on filters)
-            maxR: 10, // Water map: maximum rat score per square in the whole data set (! depends on filters)
-            minW: 0, // Water map: minimum water score per square in the whole data set
-            maxW: 3500,  // Water map: maximum water score per square in the whole data set
-
-             */
-
             maxRatsPerKmWaterway: 100, // Water map: maximum rats per km waterway, for the color scale
+            layerSwitchZoomLevel: 13, // Zoom level at which the aggregated occurrences layer is shown instead of the simple occurrences layer
         }
     },
     watch: {
@@ -481,13 +476,11 @@ Vue.component('dashboard-map', {
             }
         },
         selectedYearsRichness: {
-            //immediate: true,
             handler: function (newVal) {
                 this.replaceVectorTilesBiodiversityLayer();
             }
         },
         selectedGroupsRichness: {
-            //immediate: true,
             handler: function (newVal) {
                 this.replaceVectorTilesBiodiversityLayer();
             }
@@ -500,8 +493,11 @@ Vue.component('dashboard-map', {
         },
         dataLayerOpacity: {
             handler: function (val) {
-                if (this.occurrencesVectorTilesLayer) {
-                    this.restyleOccurrencesVectorTilesLayer();
+                if (this.aggregatedOccurrencesVectorTilesLayer) {
+                    this.restyleAggregatedOccurrencesVectorTilesLayer();
+                }
+                if (this.simpleOccurrencesVectorTilesLayer) {
+                    this.restyleSimpleOccurrencesVectorTilesLayer();
                 }
                 if (this.occurrencesForWaterVectorTilesLayer) {
                     this.restyleOccurrencesForWaterVectorTilesLayer();
@@ -510,12 +506,12 @@ Vue.component('dashboard-map', {
         },
         HexMinOccCount: {
             handler: function (val) {
-                this.restyleOccurrencesVectorTilesLayer();
+                this.restyleAggregatedOccurrencesVectorTilesLayer();
             },
         },
         HexMaxOccCount: {
             handler: function (val) {
-                this.restyleOccurrencesVectorTilesLayer();
+                this.restyleAggregatedOccurrencesVectorTilesLayer();
             },
         },
         filters: {
@@ -597,7 +593,17 @@ Vue.component('dashboard-map', {
             }
 
         },
-        occurrencesVectorTilesLayerStyleFunction: function () {
+        simpleOccurrencesVectorTilesLayerStyleFunction: function () {
+            return function (feature) {
+                return new ol.style.Style({
+                    image: new ol.style.Circle({
+                        radius: 7,
+                        fill: new ol.style.Fill({color: "red"})
+                    })
+                });
+            }
+        },
+        aggregatedOccurrencesVectorTilesLayerStyleFunction: function () {
             var vm = this;
             return function (feature) {
                 const fillColorRgbString = vm.colorScaleOccurrences(feature.properties_.count);
@@ -626,11 +632,13 @@ Vue.component('dashboard-map', {
     methods: {
         setRatsTilesLayerVisbilility: function (selectedDataType) {
             if (selectedDataType === 'occurrences') {
-                this.occurrencesVectorTilesLayer.setVisible(true);
+                this.aggregatedOccurrencesVectorTilesLayer.setVisible(true);
+                this.simpleOccurrencesVectorTilesLayer.setVisible(true);
                 this.occurrencesForWaterVectorTilesLayer.setVisible(false);
             } else if (selectedDataType === 'occurrencesForWater') {
                 this.occurrencesForWaterVectorTilesLayer.setVisible(true);
-                this.occurrencesVectorTilesLayer.setVisible(false);
+                this.aggregatedOccurrencesVectorTilesLayer.setVisible(false);
+                this.simpleOccurrencesVectorTilesLayer.setVisible(false);
             }
         },
         setBiodiversityTilesLayerVisibility: function () {
@@ -640,9 +648,14 @@ Vue.component('dashboard-map', {
                 this.biodiversityVectorTilesLayer.setVisible(false);
             }
         },
-        restyleOccurrencesVectorTilesLayer: function () {
-            if (this.occurrencesVectorTilesLayer) {
-                this.occurrencesVectorTilesLayer.setStyle(this.occurrencesVectorTilesLayerStyleFunction)
+        restyleSimpleOccurrencesVectorTilesLayer: function () {
+            if (this.simpleOccurrencesVectorTilesLayer) {
+                this.simpleOccurrencesVectorTilesLayer.setStyle(this.simpleOccurrencesVectorTilesLayerStyleFunction)
+            }
+        },
+        restyleAggregatedOccurrencesVectorTilesLayer: function () {
+            if (this.aggregatedOccurrencesVectorTilesLayer) {
+                this.aggregatedOccurrencesVectorTilesLayer.setStyle(this.aggregatedOccurrencesVectorTilesLayerStyleFunction)
             }
         },
         restyleOccurrencesForWaterVectorTilesLayer: function () {
@@ -651,12 +664,27 @@ Vue.component('dashboard-map', {
             }
         },
         replaceVectorTilesRatsLayers: function () {
-            this.map.removeLayer(this.occurrencesVectorTilesLayer);
+            this.map.removeLayer(this.simpleOccurrencesVectorTilesLayer);
+            this.map.removeLayer(this.aggregatedOccurrencesVectorTilesLayer);
             this.map.removeLayer(this.occurrencesForWaterVectorTilesLayer);
 
+            this.simpleOccurrencesVectorTilesLayer = this.createVectorTilesRatsLayer(
+                this.tileServerUrlTemplateOccurrencesSimple,
+                this.simpleOccurrencesVectorTilesLayerStyleFunction,
+                2,
+                this.layerSwitchZoomLevel,
+                24); // minZoom doesn't work without maxZoom?
+            this.map.addLayer(this.simpleOccurrencesVectorTilesLayer);
             this.loadOccMinMax(this.initialZoom, this.filters);
-            this.occurrencesVectorTilesLayer = this.createVectorTilesRatsLayer(this.tileServerUrlTemplateOccurrences, this.occurrencesVectorTilesLayerStyleFunction, 2);
-            this.map.addLayer(this.occurrencesVectorTilesLayer);
+
+
+            this.aggregatedOccurrencesVectorTilesLayer = this.createVectorTilesRatsLayer(
+                this.tileServerUrlTemplateOccurrencesAggregated,
+                this.aggregatedOccurrencesVectorTilesLayerStyleFunction,
+                2,
+                null,
+                this.layerSwitchZoomLevel);
+            this.map.addLayer(this.aggregatedOccurrencesVectorTilesLayer);
             this.occurrencesForWaterVectorTilesLayer = this.createVectorTilesRatsLayer(this.tileServerUrlTemplateOccurrencesForWater, this.occurrencesForWaterTilesLayerStyleFunction, 2);
             this.map.addLayer(this.occurrencesForWaterVectorTilesLayer);
 
@@ -666,7 +694,6 @@ Vue.component('dashboard-map', {
         replaceVectorTilesBiodiversityLayer: function () {
             this.map.removeLayer(this.biodiversityVectorTilesLayer);
             this.biodiversityVectorTilesLayer = this.createVectorTilesBiodiversityLayer(this.tileServerUrlTemplateRichness, this.biodiversityTilesLayerStyleFunction, 2);
-            //console.log("passe", this.biodiversityVectorTilesLayer);
             this.map.addLayer(this.biodiversityVectorTilesLayer);
 
             this.setBiodiversityTilesLayerVisibility();
@@ -709,15 +736,17 @@ Vue.component('dashboard-map', {
             return l;
         },
 
-        createVectorTilesRatsLayer: function (tileServerUrlTemplate, styleFunction, zIndex) {
-            var vm = this;
-            var l = new ol.layer.VectorTile({
+        createVectorTilesRatsLayer: function (tileServerUrlTemplate, styleFunction, zIndex, minZoom = null, maxZoom = null) {
+            let vm = this;
+            const l = new ol.layer.VectorTile({
                 source: new ol.source.VectorTile({
                     format: new ol.format.MVT(),
                     url: tileServerUrlTemplate + '?' + $.param(vm.filters),
                 }),
                 style: styleFunction,
-                zIndex: zIndex
+                zIndex: zIndex,
+                minZoom: minZoom,
+                maxZoom: maxZoom,
             });
 
             return l;
