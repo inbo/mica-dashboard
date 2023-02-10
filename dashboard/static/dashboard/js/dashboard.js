@@ -462,6 +462,8 @@ Vue.component('dashboard-map', {
 
             maxRatsPerKmWaterway: 100, // Water map: maximum rats per km waterway, for the color scale
             layerSwitchZoomLevel: 13, // Zoom level at which the aggregated occurrences layer is shown instead of the simple occurrences layer
+            popup: new ol.Overlay({}),
+            popover: null,
         }
     },
     watch: {
@@ -822,6 +824,50 @@ Vue.component('dashboard-map', {
         this.map = this.createBaseMap();
         this.map.setTarget(this.$refs['map-root']); // Assign the map to div and display
         this.replaceVectorTilesRatsLayers();
+
+        // Prepare popup
+        this.popup.setElement(this.$refs["popup-root"]);
+        this.map.addOverlay(this.popup);
+
+        this.map.on('click', evt => {
+            if (this.map && this.map.getView().getZoom() >= this.layerSwitchZoomLevel) {
+                const features = this.map.getFeaturesAtPixel(evt.pixel);
+
+                const clickedFeaturesData = features.map((f) => {
+                    const properties = f.getProperties();
+                    return {
+                        gbifId: properties["gbif_id"],
+                        url: "https://www.gbif.org/occurrence/" + properties["gbif_id"],
+                    };
+                });
+
+                const clickedFeaturesHtmlList = clickedFeaturesData.map((f) => {
+                    return '<li><a href="' + f.url + '" target="_blank">' + f.gbifId + '</a></li>';
+                });
+
+                // Hide previously opened
+                if (this.popover !== null) {
+                    this.popover.hide();
+                }
+
+                if (clickedFeaturesData.length > 0) {
+                    this.popup.setPosition(evt.coordinate);
+                    this.popover = new bootstrap.Popover(this.popup.getElement(), {
+                        html: true,
+                        content:
+                            "<ul class='list-unstyled'>" +
+                            clickedFeaturesHtmlList.join("") +
+                            "</ul>",
+                    });
+                    this.popover.show();
+                }
+            }
+        });
     },
-    template: '<div id="map" class="map" ref="map-root" style="height: 500px; width: 100%;"></div>'
+    template: `
+        <div>
+            <div id="map" class="map" ref="map-root" style="height: 500px; width: 100%;"></div>
+            <div ref="popup-root" title="Observations at this location"></div>
+        </div> 
+    `
 })
