@@ -291,7 +291,12 @@ Vue.component('dashboard-occurrence-counter', {
         }
     },
 
-    template: `<h4><span class="badge bg-warning" style="float: right"> <span v-if="loading">Loading...</span>{{ formattedCount }} {{ occurrencesPluralized }} matching selection</span></h4>`
+    template: `<h4>
+                    <span class="badge bg-warning" style="float: right"> 
+                        <span v-if="loading">Loading...</span>
+                        <span v-else>{{ formattedCount }} {{ occurrencesPluralized }} matching selection</span>
+                    </span>
+               </h4>`
 });
 
 // A single page in the occurrence table
