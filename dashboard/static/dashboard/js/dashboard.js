@@ -19,6 +19,10 @@ Vue.component('bar-chart', {
             type: Number,
             default: 15,
         },
+        hidden: {
+            type: Boolean,
+            default: false,
+        }
     },
     data: function () {
         return {
@@ -79,6 +83,13 @@ Vue.component('bar-chart', {
             );
             return maxVal ? maxVal : 0;
         },
+        displayClasses() {
+            return {
+                'd-none': this.hidden,
+                'd-block': !this.hidden,
+                'mx-auto': true,
+            };
+        }
     },
     directives: {
         yaxis: {
@@ -111,7 +122,7 @@ Vue.component('bar-chart', {
     },
     template: `
         <svg
-            class="d-block mx-auto"
+            :class="displayClasses"
             :width="svgStyle.width"
             :height="svgStyle.height"
         >
@@ -150,6 +161,7 @@ Vue.component('dashboard-histogram', {
     data: function () {
         return {
             histogramDataFromServer: [],
+            loading: false,
         }
     },
     computed: {
@@ -189,7 +201,7 @@ Vue.component('dashboard-histogram', {
         },
         loadHistogramData: function (filters) {
             let vm = this;
-
+            vm.loading = true;
             // The histogram has to drop the date filtering parameters
             $.ajax({
                 url: this.monthlyCountersUrl,
@@ -216,6 +228,7 @@ Vue.component('dashboard-histogram', {
 
                     vm.histogramDataFromServer = emptyHistogramData;
                 }
+                vm.loading = false;
             })
         }
     },
@@ -231,7 +244,8 @@ Vue.component('dashboard-histogram', {
     template: `
         <div class="chart-container">
             <h2>Trend over time</h2>
-            <bar-chart :bar-data="preparedHistogramData" />
+            <h3 v-if="loading">Loading...</h3>
+            <bar-chart :hidden="loading" :bar-data="preparedHistogramData" />
         </div>`,
 });
 
@@ -242,7 +256,8 @@ Vue.component('dashboard-occurrence-counter', {
     },
     data: function () {
         return {
-            'count': 0
+            'count': 0,
+            'loading': false
         }
     },
     computed: {
@@ -256,11 +271,13 @@ Vue.component('dashboard-occurrence-counter', {
     methods: {
         updateCount: function (filters) {
             var vm = this;
+            vm.loading = true;
             $.ajax({
                 url: this.counterUrl,
                 data: filters
             }).done(function (data) {
                 vm.count = data.count;
+                vm.loading = false;
             })
         }
     },
@@ -274,7 +291,7 @@ Vue.component('dashboard-occurrence-counter', {
         }
     },
 
-    template: `<h4><span class="badge bg-warning" style="float: right">{{ formattedCount }} {{ occurrencesPluralized }} matching selection</span></h4>`
+    template: `<h4><span class="badge bg-warning" style="float: right"> <span v-if="loading">Loading...</span>{{ formattedCount }} {{ occurrencesPluralized }} matching selection</span></h4>`
 });
 
 // A single page in the occurrence table
