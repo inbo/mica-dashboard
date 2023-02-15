@@ -370,7 +370,7 @@ Vue.component('dashboard-table', {
             }
         },
         loadOccurrences: function (filters, orderBy, pageSize, pageNumber) {
-            var params = filters;
+            let params = Object.assign({}, filters);
             params.order = orderBy;
             params.limit = pageSize;
             params.page_number = pageNumber;
@@ -785,7 +785,7 @@ Vue.component('dashboard-map', {
         loadOccMinMax: function (zoomLevel, filters) {
             var vm = this
 
-            var params = filters;
+            let params = Object.assign({}, filters);
             params.zoom = zoomLevel;
 
             $.ajax({
