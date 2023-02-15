@@ -618,11 +618,12 @@ Vue.component('dashboard-map', {
 
         },
         simpleOccurrencesVectorTilesLayerStyleFunction: function () {
+            let vm = this
             return function (feature) {
                 return new ol.style.Style({
                     image: new ol.style.Circle({
                         radius: 7,
-                        fill: new ol.style.Fill({color: "#242d66"})
+                        fill: new ol.style.Fill({color: vm.addOpacityToColor(d3.color("#242d66"))})
                     })
                 });
             }
@@ -865,11 +866,13 @@ Vue.component('dashboard-map', {
                     return {
                         gbifId: properties["gbif_id"],
                         url: "https://www.gbif.org/occurrence/" + properties["gbif_id"],
+                        individualCount: properties["individual_count"],
+                        datasetName: properties["dataset_name"],
                     };
                 });
 
                 const clickedFeaturesHtmlList = clickedFeaturesData.map((f) => {
-                    return '<li><a href="' + f.url + '" target="_blank">' + f.gbifId + '</a></li>';
+                    return '<li><a href="' + f.url + '" target="_blank">' + f.gbifId + '</a> (<b>individual count:</b></b> ' + f.individualCount + ' ' + '<b>dataset:</b> '  +  f.datasetName +')</li>';
                 });
 
                 // Hide previously opened

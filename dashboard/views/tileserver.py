@@ -187,8 +187,15 @@ def mvt_tiles_occurrences(request, zoom, x, y):
         Template(
             """
             WITH mvtgeom AS (
-                SELECT ST_AsMVTGeom(dashboard_filtered_occ.location, ST_TileEnvelope({{ zoom }}, {{ x }}, {{ y }})), dashboard_filtered_occ.gbif_id
-                FROM ($jinjasql_fragment_filter_occurrences) AS dashboard_filtered_occ
+                SELECT 
+                    ST_AsMVTGeom(dashboard_filtered_occ.location, ST_TileEnvelope({{ zoom }}, {{ x }}, {{ y }})), 
+                    dashboard_filtered_occ.gbif_id, 
+                    dashboard_filtered_occ.individual_count,
+                    dataset.name AS dataset_name
+                FROM 
+                    ($jinjasql_fragment_filter_occurrences) AS dashboard_filtered_occ,
+                    dashboard_dataset AS dataset
+               WHERE dashboard_filtered_occ.source_dataset_id = dataset.id     
             )
             SELECT st_asmvt(mvtgeom.*) FROM mvtgeom;
             """
