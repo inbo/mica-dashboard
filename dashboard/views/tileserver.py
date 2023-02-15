@@ -343,7 +343,6 @@ def mvt_tiles_areas(request, zoom, x, y):
             FROM dashboard_area AS areas, dashboard_biodiversityindicatorobservation AS obs, dashboard_biodiversityindicatorspecies AS species
             WHERE
             obs.species_id = species.id AND
-            species.species_group = 'BI' AND
             {% if years %}
                 EXTRACT('year' FROM obs.date) IN {{ years | inclause }} AND
             {% endif %}
