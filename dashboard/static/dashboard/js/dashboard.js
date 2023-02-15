@@ -622,7 +622,7 @@ Vue.component('dashboard-map', {
                 return new ol.style.Style({
                     image: new ol.style.Circle({
                         radius: 7,
-                        fill: new ol.style.Fill({color: "red"})
+                        fill: new ol.style.Fill({color: "#242d66"})
                     })
                 });
             }
@@ -834,7 +834,7 @@ Vue.component('dashboard-map', {
                             source: vectorSource,
                             style: new ol.style.Style({
                                 stroke: new ol.style.Stroke({
-                                    color: "red",
+                                    color: "#242d66",
                                     width: 3,
                                 }),
                             }),
