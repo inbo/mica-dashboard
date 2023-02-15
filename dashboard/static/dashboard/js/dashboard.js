@@ -701,7 +701,6 @@ Vue.component('dashboard-map', {
             this.map.addLayer(this.simpleOccurrencesVectorTilesLayer);
             this.loadOccMinMax(this.initialZoom, this.filters);
 
-
             this.aggregatedOccurrencesVectorTilesLayer = this.createVectorTilesRatsLayer(
                 this.tileServerUrlTemplateOccurrencesAggregated,
                 this.aggregatedOccurrencesVectorTilesLayerStyleFunction,
@@ -709,6 +708,7 @@ Vue.component('dashboard-map', {
                 null,
                 this.layerSwitchZoomLevel);
             this.map.addLayer(this.aggregatedOccurrencesVectorTilesLayer);
+
             this.occurrencesForWaterVectorTilesLayer = this.createVectorTilesRatsLayer(this.tileServerUrlTemplateOccurrencesForWater, this.occurrencesForWaterTilesLayerStyleFunction, 2);
             this.map.addLayer(this.occurrencesForWaterVectorTilesLayer);
 
@@ -760,7 +760,7 @@ Vue.component('dashboard-map', {
             return l;
         },
 
-        createVectorTilesRatsLayer: function (tileServerUrlTemplate, styleFunction, zIndex, minZoom = null, maxZoom = null) {
+        createVectorTilesRatsLayer: function (tileServerUrlTemplate, styleFunction, zIndex, minZom = null, maxZoom = null) {
             let vm = this;
             const l = new ol.layer.VectorTile({
                 source: new ol.source.VectorTile({
@@ -769,9 +769,14 @@ Vue.component('dashboard-map', {
                 }),
                 style: styleFunction,
                 zIndex: zIndex,
-                minZoom: minZoom,
-                maxZoom: maxZoom,
             });
+
+            if (minZom != null) {
+                l.setMinZoom(minZom);
+            }
+            if (maxZoom != null) {
+                l.setMaxZoom(maxZoom);
+            }
 
             return l;
         },
