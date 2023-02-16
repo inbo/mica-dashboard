@@ -444,6 +444,144 @@ Vue.component('dashboard-table', {
                </div>`
 });
 
+
+Vue.component('color-legend', {
+    props: ['colorScale', 'opacity'],
+    data: function () {
+        return {
+            topic: 'aaa',
+            //opacity: 1,
+            styleDiv: {
+                height: 200,
+                width: 200,
+                margin: {top: 10, right: 170, bottom: 10, left: 2}
+            }
+        }
+    },
+    directives: {
+        axis(el, binding) {
+            const scaleFunction = binding.value.scale;
+            //const tickLabels = binding.value.tickLabels;
+            const legendAxis = d3
+                .axisRight(scaleFunction)
+                //.tickSize(6)
+                //.tickFormat((d, i) => tickLabels[i])
+                //.ticks(tickLabels.length - 1);
+            legendAxis(d3.select(el));
+        }
+    },
+    mounted: function () {
+        this.renderColorRamp(this.opacity);
+    },
+    watch: {
+        colorScale: {
+            handler: function (newOpacity) {
+                this.clearCanvas();
+                this.renderColorRamp(newOpacity);
+            },
+        },
+        opacity: {
+            handler: function (newOpacity) {
+                this.clearCanvas();
+                this.renderColorRamp(newOpacity);
+            },
+        }
+    },
+    methods: {
+        clearCanvas: function () {
+            const ctx = this.ctx;
+            if (ctx != null) {
+                ctx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
+            }
+        },
+        addOpacityToColor: function (colorStr, opacity) {
+            const colorObj = d3.color(colorStr);
+
+            if (colorObj != null) {
+                colorObj.opacity = opacity;
+                return colorObj + "";
+            } else {
+                throw "colorStr is not a correct CSS color specifier";
+            }
+
+        },
+        renderColorRamp: function (opacity) {
+            const ctx = this.ctx;
+            if (ctx != null) {
+                d3.range(this.styleDiv.height).forEach(i => {
+                    ctx.fillStyle = this.addOpacityToColor(
+                        this.colorScale(this.legendScale.invert(i)),
+                        opacity
+                    );
+                    ctx.fillRect(0, i, this.canvasWidth, 1);
+                });
+            } else {
+                throw "No canvas context found";
+            }
+        }
+    },
+    computed: {
+        ctx: function () {
+            return this.$refs.canvas.getContext("2d");
+        },
+        /*legendTickLabels: function () {
+            return [`0 - low ${this.topic}`, `1 - high ${this.topic}`]
+        },*/
+        legendScale: function () {
+            return d3
+                .scaleLinear()
+                .range([
+                    this.styleDiv.height -
+                    this.styleDiv.margin.top -
+                    this.styleDiv.margin.bottom,
+                    1
+                ])
+                .domain(this.colorScale.domain());
+        },
+        styleObjectDivPrepared: function () {
+            return {
+                display: 'inline-block',
+                position: 'relative',
+            }
+        },
+        styleCanvasPrepared: function () {
+            return {
+                height: this.canvasHeight + "px",
+                width: this.canvasWidth + "px",
+                border: "1px solid #000",
+                //position: "absolute",
+                top: this.styleDiv.margin.top + "px",
+                left: this.styleDiv.margin.left + "px"
+            };
+        },
+        canvasWidth: function () {
+            return (
+                this.styleDiv.width -
+                this.styleDiv.margin.left -
+                this.styleDiv.margin.right
+            );
+        },
+        canvasHeight: function () {
+            return (
+                this.styleDiv.height -
+                this.styleDiv.margin.top -
+                this.styleDiv.margin.bottom
+            );
+        }
+    },
+    template: `<div id="color-legend" :style="styleObjectDivPrepared">
+                    <h1>Color legend</h1>
+                    <canvas ref="canvas" :height="canvasHeight" :width="canvasWidth" :style="styleCanvasPrepared" />
+                    <svg :height="styleDiv.height" :width="styleDiv.width" style=" left: 0px; top: 0px;">
+                        <g
+                            v-axis="{'scale': legendScale }"
+                            class="axis"
+                            :transform="'translate( ' + canvasWidth + ', ' +  styleDiv.margin.top + ')'"
+                        />
+                    </svg>
+               </div>`
+});
+
 // The main map
 Vue.component('dashboard-map', {
     props: {
@@ -872,7 +1010,7 @@ Vue.component('dashboard-map', {
                 });
 
                 const clickedFeaturesHtmlList = clickedFeaturesData.map((f) => {
-                    return '<li><a href="' + f.url + '" target="_blank">' + f.gbifId + '</a> (<b>individual count:</b></b> ' + f.individualCount + ' ' + '<b>dataset:</b> '  +  f.datasetName +')</li>';
+                    return '<li><a href="' + f.url + '" target="_blank">' + f.gbifId + '</a> (<b>individual count:</b></b> ' + f.individualCount + ' ' + '<b>dataset:</b> ' + f.datasetName + ')</li>';
                 });
 
                 // Hide previously opened
@@ -896,6 +1034,7 @@ Vue.component('dashboard-map', {
     },
     template: `
         <div>
+            <color-legend :color-scale="colorScaleOccurrences" :opacity="dataLayerOpacity"></color-legend>
             <div id="map" class="map" ref="map-root" style="height: 500px; width: 100%;"></div>
             <div ref="popup-root" title="Observations at this location"></div>
         </div> 
