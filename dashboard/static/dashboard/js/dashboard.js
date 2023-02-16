@@ -454,7 +454,7 @@ Vue.component('color-legend', {
             styleDiv: {
                 height: 200,
                 width: 200,
-                margin: {top: 10, right: 170, bottom: 10, left: 2}
+                margin: {top: 10, right: 10, bottom: 10, left: 10}
             }
         }
     },
@@ -463,7 +463,7 @@ Vue.component('color-legend', {
             const scaleFunction = binding.value.scale;
             //const tickLabels = binding.value.tickLabels;
             const legendAxis = d3
-                .axisRight(scaleFunction)
+                .axisBottom(scaleFunction)
                 //.tickSize(6)
                 //.tickFormat((d, i) => tickLabels[i])
                 //.ticks(tickLabels.length - 1);
@@ -513,7 +513,7 @@ Vue.component('color-legend', {
                         this.colorScale(this.legendScale.invert(i)),
                         opacity
                     );
-                    ctx.fillRect(0, i, this.canvasWidth, 1);
+                    ctx.fillRect(i, 0, 1, this.canvasHeight);
                 });
             } else {
                 throw "No canvas context found";
@@ -576,7 +576,7 @@ Vue.component('color-legend', {
                         <g
                             v-axis="{'scale': legendScale }"
                             class="axis"
-                            :transform="'translate( ' + canvasWidth + ', ' +  styleDiv.margin.top + ')'"
+                            :transform="'translate( ' + styleDiv.margin.left + ', ' +  canvasHeight + ')'"
                         />
                     </svg>
                </div>`
