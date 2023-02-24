@@ -984,6 +984,11 @@ Vue.component('dashboard-map', {
         this.map.addOverlay(this.popup);
 
         this.map.on('click', evt => {
+            // Hide previously opened
+            if (this.popover !== null) {
+                this.popover.hide();
+            }
+
             if (this.map && this.map.getView().getZoom() >= this.layerSwitchZoomLevel) {
                 const features = this.map.getFeaturesAtPixel(evt.pixel);
 
@@ -1001,10 +1006,6 @@ Vue.component('dashboard-map', {
                     return '<li><a href="' + f.url + '" target="_blank">' + f.gbifId + '</a> (<b>individual count:</b></b> ' + f.individualCount + ' ' + '<b>dataset:</b> ' + f.datasetName + ')</li>';
                 });
 
-                // Hide previously opened
-                if (this.popover !== null) {
-                    this.popover.hide();
-                }
 
                 if (clickedFeaturesData.length > 0) {
                     this.popup.setPosition(evt.coordinate);
