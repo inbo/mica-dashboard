@@ -822,7 +822,7 @@ Vue.component('dashboard-map', {
             this.simpleOccurrencesVectorTilesLayer = this.createVectorTilesRatsLayer(
                 this.tileServerUrlTemplateOccurrencesSimple,
                 this.simpleOccurrencesVectorTilesLayerStyleFunction,
-                2,
+                4,
                 this.layerSwitchZoomLevel,
                 24); // minZoom doesn't work without maxZoom?
             this.map.addLayer(this.simpleOccurrencesVectorTilesLayer);
@@ -836,7 +836,7 @@ Vue.component('dashboard-map', {
                 this.layerSwitchZoomLevel);
             this.map.addLayer(this.aggregatedOccurrencesVectorTilesLayer);
 
-            this.occurrencesForWaterVectorTilesLayer = this.createVectorTilesRatsLayer(this.tileServerUrlTemplateOccurrencesForWater, this.occurrencesForWaterTilesLayerStyleFunction, 2);
+            this.occurrencesForWaterVectorTilesLayer = this.createVectorTilesRatsLayer(this.tileServerUrlTemplateOccurrencesForWater, this.occurrencesForWaterTilesLayerStyleFunction, 4);
             this.map.addLayer(this.occurrencesForWaterVectorTilesLayer);
 
             this.setRatsTilesLayerVisbilility(this.mapDataType);
@@ -844,7 +844,7 @@ Vue.component('dashboard-map', {
 
         replaceVectorTilesBiodiversityLayer: function () {
             this.map.removeLayer(this.biodiversityVectorTilesLayer);
-            this.biodiversityVectorTilesLayer = this.createVectorTilesBiodiversityLayer(this.tileServerUrlTemplateRichness, this.biodiversityTilesLayerStyleFunction, 2);
+            this.biodiversityVectorTilesLayer = this.createVectorTilesBiodiversityLayer(this.tileServerUrlTemplateRichness, this.biodiversityTilesLayerStyleFunction, 3);
             this.map.addLayer(this.biodiversityVectorTilesLayer);
 
             this.setBiodiversityTilesLayerVisibility();
@@ -1024,6 +1024,7 @@ Vue.component('dashboard-map', {
         <div>
             <div id="map" class="map" ref="map-root" style="height: 500px; width: 100%; margin-bottom: 10px"></div>
             <color-legend :color-scale="colorScaleSelectedDataLayer" :opacity="dataLayerOpacity"></color-legend>
+            <color-legend :color-scale="colorScaleBiodiversity" :opacity="1"></color-legend>
             <div ref="popup-root" title="Observations at this location"></div>
         </div> 
     `
