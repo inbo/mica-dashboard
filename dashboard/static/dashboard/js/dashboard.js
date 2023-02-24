@@ -449,11 +449,9 @@ Vue.component('color-legend', {
     props: ['colorScale', 'opacity'],
     data: function () {
         return {
-            topic: 'aaa',
-            //opacity: 1,
             styleDiv: {
-                height: 200,
-                width: 200,
+                height: 50,
+                width: 1200,
                 margin: {top: 10, right: 10, bottom: 10, left: 10}
             }
         }
@@ -461,12 +459,8 @@ Vue.component('color-legend', {
     directives: {
         axis(el, binding) {
             const scaleFunction = binding.value.scale;
-            //const tickLabels = binding.value.tickLabels;
             const legendAxis = d3
                 .axisBottom(scaleFunction)
-                //.tickSize(6)
-                //.tickFormat((d, i) => tickLabels[i])
-                //.ticks(tickLabels.length - 1);
             legendAxis(d3.select(el));
         }
     },
@@ -508,7 +502,7 @@ Vue.component('color-legend', {
         renderColorRamp: function (opacity) {
             const ctx = this.ctx;
             if (ctx != null) {
-                d3.range(this.styleDiv.height).forEach(i => {
+                d3.range(this.canvasWidth).forEach(i => {
                     ctx.fillStyle = this.addOpacityToColor(
                         this.colorScale(this.legendScale.invert(i)),
                         opacity
@@ -524,32 +518,19 @@ Vue.component('color-legend', {
         ctx: function () {
             return this.$refs.canvas.getContext("2d");
         },
-        /*legendTickLabels: function () {
-            return [`0 - low ${this.topic}`, `1 - high ${this.topic}`]
-        },*/
         legendScale: function () {
             return d3
                 .scaleLinear()
                 .range([
-                    this.styleDiv.height -
-                    this.styleDiv.margin.top -
-                    this.styleDiv.margin.bottom,
+                    this.canvasWidth,
                     1
                 ])
                 .domain(this.colorScale.domain());
         },
-        styleObjectDivPrepared: function () {
-            return {
-                display: 'inline-block',
-                position: 'relative',
-            }
-        },
         styleCanvasPrepared: function () {
             return {
-                height: this.canvasHeight + "px",
-                width: this.canvasWidth + "px",
                 border: "1px solid #000",
-                //position: "absolute",
+                display: "block",
                 top: this.styleDiv.margin.top + "px",
                 left: this.styleDiv.margin.left + "px"
             };
@@ -569,14 +550,12 @@ Vue.component('color-legend', {
             );
         }
     },
-    template: `<div id="color-legend" :style="styleObjectDivPrepared">
-                    <h1>Color legend</h1>
+    template: `<div id="color-legend">
                     <canvas ref="canvas" :height="canvasHeight" :width="canvasWidth" :style="styleCanvasPrepared" />
-                    <svg :height="styleDiv.height" :width="styleDiv.width" style=" left: 0px; top: 0px;">
+                    <svg :height="20" :width="styleDiv.width">
                         <g
                             v-axis="{'scale': legendScale }"
-                            class="axis"
-                            :transform="'translate( ' + styleDiv.margin.left + ', ' +  canvasHeight + ')'"
+                            class="axis"                            
                         />
                     </svg>
                </div>`
