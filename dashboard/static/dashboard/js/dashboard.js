@@ -446,7 +446,7 @@ Vue.component('dashboard-table', {
 
 
 Vue.component('color-legend', {
-    props: ['colorScale', 'opacity'],
+    props: ['colorScale', 'opacity', 'label'],
     data: function () {
         return {
             styleDiv: {
@@ -551,6 +551,7 @@ Vue.component('color-legend', {
         }
     },
     template: `<div id="color-legend">
+                    <span class="small">{{ label }}</span>
                     <canvas ref="canvas" :height="canvasHeight" :width="canvasWidth" :style="styleCanvasPrepared" />
                     <svg :height="20" :width="styleDiv.width">
                         <g
@@ -569,6 +570,7 @@ Vue.component('dashboard-map', {
         'tileServerUrlTemplateOccurrencesAggregated': String,
         'tileServerUrlTemplateOccurrencesForWater': String,
         'mapDataType': String, // occurrences | occurrencesForWater. Will impact the tile server url to use + display style. occurrences are shown aggregated or not, depending on the zoom level
+        'mapDataTypeText': String,
 
         'initialLat': Number,
         'initialLon': Number,
@@ -1024,8 +1026,8 @@ Vue.component('dashboard-map', {
     template: `
         <div>
             <div id="map" class="map" ref="map-root" style="height: 500px; width: 100%; margin-bottom: 10px"></div>
-            <color-legend :color-scale="colorScaleSelectedDataLayer" :opacity="dataLayerOpacity"></color-legend>
-            <color-legend :color-scale="colorScaleBiodiversity" :opacity="1"></color-legend>
+            <color-legend :color-scale="colorScaleSelectedDataLayer" :opacity="dataLayerOpacity" :label="mapDataTypeText"></color-legend>
+            <color-legend v-show="showBiodiversityRichness" :color-scale="colorScaleBiodiversity" :opacity="1" label="Biodiversity richness in MICA areas: "></color-legend>
             <div ref="popup-root" title="Observations at this location"></div>
         </div> 
     `
