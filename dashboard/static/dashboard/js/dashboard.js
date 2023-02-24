@@ -450,7 +450,7 @@ Vue.component('color-legend', {
     data: function () {
         return {
             styleDiv: {
-                height: 50,
+                height: 20,
                 width: 1200,
                 margin: {top: 0, right: 0, bottom: 0, left: 20}
             }
@@ -1022,8 +1022,8 @@ Vue.component('dashboard-map', {
     },
     template: `
         <div>
+            <div id="map" class="map" ref="map-root" style="height: 500px; width: 100%; margin-bottom: 10px"></div>
             <color-legend :color-scale="colorScaleSelectedDataLayer" :opacity="dataLayerOpacity"></color-legend>
-            <div id="map" class="map" ref="map-root" style="height: 500px; width: 100%;"></div>
             <div ref="popup-root" title="Observations at this location"></div>
         </div> 
     `
