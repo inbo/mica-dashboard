@@ -452,7 +452,7 @@ Vue.component('color-legend', {
             styleDiv: {
                 height: 50,
                 width: 1200,
-                margin: {top: 10, right: 10, bottom: 10, left: 10}
+                margin: {top: 0, right: 0, bottom: 0, left: 20}
             }
         }
     },
@@ -522,8 +522,8 @@ Vue.component('color-legend', {
             return d3
                 .scaleLinear()
                 .range([
-                    this.canvasWidth,
-                    1
+                    1,
+                    this.canvasWidth
                 ])
                 .domain(this.colorScale.domain());
         },
@@ -599,7 +599,7 @@ Vue.component('dashboard-map', {
             occurrencesForWaterVectorTilesLayer: null,
             biodiversityVectorTilesLayer: null,
 
-            maxRatsPerKmWaterway: 100, // Water map: maximum rats per km waterway, for the color scale
+            maxRatsPerKmWaterway: 300, // Water map: maximum rats per km waterway, for the color scale. Scale is clamped, so higher value will be displayed as the max
             layerSwitchZoomLevel: 13, // Zoom level at which the aggregated occurrences layer is shown instead of the simple occurrences layer
             popup: new ol.Overlay({}),
             popover: null,
@@ -671,7 +671,16 @@ Vue.component('dashboard-map', {
         },
         colorScaleOccurrencesForWater: function () {
             return d3.scaleSequential(d3.interpolateCool)
-                .domain([0, this.maxRatsPerKmWaterway])
+                .domain([1, this.maxRatsPerKmWaterway])
+                .clamp(true);
+        },
+
+        colorScaleSelectedDataLayer: function () {
+            if (this.mapDataType === 'occurrences') {
+                return this.colorScaleOccurrences;
+            } else if (this.mapDataType === 'occurrencesForWater') {
+                return this.colorScaleOccurrencesForWater;
+            }
         },
 
         ratScaleOccurrencesForWater: function () {
@@ -1013,7 +1022,7 @@ Vue.component('dashboard-map', {
     },
     template: `
         <div>
-            <color-legend :color-scale="colorScaleOccurrences" :opacity="dataLayerOpacity"></color-legend>
+            <color-legend :color-scale="colorScaleSelectedDataLayer" :opacity="dataLayerOpacity"></color-legend>
             <div id="map" class="map" ref="map-root" style="height: 500px; width: 100%;"></div>
             <div ref="popup-root" title="Observations at this location"></div>
         </div> 
