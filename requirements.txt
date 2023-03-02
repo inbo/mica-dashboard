@@ -1,5 +1,5 @@
 Django==3.2.18
-psycopg2-binary==2.8.6
+psycopg2-binary==2.9.5
 python-dwca-reader==0.14.0
 Jinja2==3.0.3
 jinjasql==0.1.8
