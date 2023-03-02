@@ -9,7 +9,7 @@ THIS_DIR = os.path.dirname(__file__)
 
 SOURCE_SHAPEFILE_PATH = os.path.join(
     THIS_DIR,
-    "../../../source_data/grid/../../../source_data/grid_with_river_and_lakes_length/grid_with_river_and_lakes_length.shp",
+    "../../../source_data/rats_per_km_waterway/grid_with_river_and_lakes_length/grid_with_river_and_lakes_length.shp",
 )
 MAPPING = {
     "mpoly": "POLYGON",
