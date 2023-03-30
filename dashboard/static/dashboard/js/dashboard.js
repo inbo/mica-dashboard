@@ -175,26 +175,22 @@ Vue.component('dashboard-histogram', {
         },
     },
     methods: {
-        buildEmptyHistogramArray: function (rangeStart) {
-            // first entry: first month with data from server
-            // Last entry: current month
+        buildEmptyHistogramArray: function (rangeStart, rangeEnd) {
             let data = [];
-            const yearsRange = range(rangeStart.year, luxon.DateTime.now().year + 1);
+            const yearsRange = range(rangeStart.year, rangeEnd.year + 1);
+
             yearsRange.forEach((currentYear, yearIndex) => {
                 const startMonth = yearIndex === 0 ? rangeStart.month : 1;
                 const endMonth =
-                    yearIndex === yearsRange.length - 1 ? luxon.DateTime.now().month : 12;
+                    yearIndex === yearsRange.length - 1 ? rangeEnd.month : 12;
 
-                for (
-                    let currentMonth = startMonth;
-                    currentMonth <= endMonth;
-                    currentMonth++
-                ) {
-                    data.push({
+                for (let currentMonth = startMonth; currentMonth <= endMonth; currentMonth++) {
+                    let d = {
                         year: currentYear,
                         month: currentMonth,
                         count: 0,
-                    });
+                    }
+                    data.push(d);
                 }
             });
             return data;
@@ -212,7 +208,8 @@ Vue.component('dashboard-histogram', {
                 } else {
                     // Build an empty range (padding)
                     let emptyHistogramData = vm.buildEmptyHistogramArray(
-                        data[0]
+                        data[0],
+                        data[data.length - 1]
                     );
 
                     // Populate it
