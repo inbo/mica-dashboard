@@ -709,8 +709,9 @@ Vue.component('dashboard-map', {
                         color: fillColor,
                     }),
                     text: new ol.style.Text({
+                        font: '14px Calibri,sans-serif',
                         text: textValue,
-                        fill: new ol.style.Fill({color: vm.legibleColor(fillColor)})
+                        fill: new ol.style.Fill({color: vm.legibleColor(fillColor)}),
                     })
                 })
             }
@@ -881,6 +882,7 @@ Vue.component('dashboard-map', {
                 }),
                 style: styleFunction,
                 zIndex: zIndex,
+                declutter: true,
             });
 
             return l;
@@ -940,7 +942,7 @@ Vue.component('dashboard-map', {
                 view: new ol.View({
                     center: ol.proj.fromLonLat([this.initialLon, this.initialLat]),
                     zoom: this.initialZoom
-                })
+                }),
             });
         },
         refreshAreas: function () {
