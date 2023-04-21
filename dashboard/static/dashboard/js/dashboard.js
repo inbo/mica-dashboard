@@ -697,7 +697,7 @@ Vue.component('dashboard-map', {
             return function (feature) {
                 const numberOfSpecies = feature.properties_.species_count;
 
-                let textValue = numberOfSpecies.toFixed(2);
+                let textValue = numberOfSpecies.toFixed();
                 const fillColor = vm.colorScaleBiodiversity(numberOfSpecies);
 
                 return new ol.style.Style({
