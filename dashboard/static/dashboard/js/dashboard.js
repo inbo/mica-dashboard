@@ -712,6 +712,7 @@ Vue.component('dashboard-map', {
                         font: '14px Calibri,sans-serif',
                         text: textValue,
                         fill: new ol.style.Fill({color: vm.legibleColor(fillColor)}),
+                        overflow: true,
                     })
                 })
             }

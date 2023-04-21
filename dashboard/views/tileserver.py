@@ -336,7 +336,7 @@ def mvt_tiles_occurrences_for_water(request, zoom, x, y):
     )
 
 
-@cache_page(TILE_SERVER_CACHING_DURATION)
+#@cache_page(TILE_SERVER_CACHING_DURATION)
 def mvt_tiles_areas(request, zoom, x, y):
     """Tile server, showing MICA areas with biodiversity richness attributes."""
     years = extract_int_array_request(request, "years[]")
@@ -346,21 +346,26 @@ def mvt_tiles_areas(request, zoom, x, y):
         """
         WITH 
         alleareas AS (
-            SELECT mpoly AS geom, count(*) AS observations_count, count(DISTINCT species_id) AS species_count
-            FROM dashboard_area AS areas, dashboard_biodiversityindicatorobservation AS obs, dashboard_biodiversityindicatorspecies AS species
+            SELECT mpoly AS geom, count(*) AS observations_count, count(DISTINCT species.id) AS species_count
+            FROM dashboard_area areas
+            LEFT JOIN dashboard_biodiversityindicatorobservation obs ON
+                st_within(obs.location, areas.mpoly) AND
+                {% if years %} 
+                    EXTRACT('year' FROM obs.date) IN {{ years | inclause }}
+                {% else %}
+                    1 = 2
+                {% endif %}    
+            LEFT JOIN dashboard_biodiversityindicatorspecies species
+                ON obs.species_id = species.id AND
+                {% if species_group_codes %}
+                    species_group IN {{ species_group_codes | inclause }}
+                {% else %}
+                    1 = 2    
+                {% endif %}    
             WHERE
-            obs.species_id = species.id AND
-            {% if years %}
-                EXTRACT('year' FROM obs.date) IN {{ years | inclause }} AND
-            {% endif %}
-            {% if species_group_codes %}
-                species_group IN {{ species_group_codes | inclause }} AND
-            {% endif %}
-            st_within(obs.location, areas.mpoly) AND
-            mpoly && ST_TileEnvelope({{ zoom }}, {{ x }}, {{ y }}) AND
-            areas.id != 1
-            GROUP BY areas.mpoly
-        ), mvtgeom AS (SELECT ST_AsMVTGeom(geom, ST_TileEnvelope({{ zoom }}, {{ x }}, {{ y }})) AS geom, observations_count, species_count FROM alleareas)
+                mpoly && ST_TileEnvelope({{ zoom }}, {{ x }}, {{ y }})
+                AND areas.id != 1
+            GROUP BY areas.mpoly), mvtgeom AS (SELECT ST_AsMVTGeom(geom, ST_TileEnvelope({{ zoom }}, {{ x }}, {{ y }})) AS geom, observations_count, species_count FROM alleareas)
         SELECT st_asmvt(mvtgeom.*) FROM mvtgeom;
         """
     )
