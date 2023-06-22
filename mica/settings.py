@@ -122,7 +122,6 @@ GBIF_CATCHES_DATASET_KEY = [
     "3634aee3-41d5-4aa2-8cb5-875859f62a3a",
     "7dc4507b-63b7-4579-bd29-c5950018895b",
     "7d75109d-a6cb-4e90-89d0-79d08577c580",
-    "ddd51fa5-97ce-48ff-9a58-a09d7e76b103",
 ]
 
 # A (writable by Django) directory where GBIF datasets are temporarily stored before their ingestion
