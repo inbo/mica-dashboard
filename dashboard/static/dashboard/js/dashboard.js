@@ -598,7 +598,7 @@ Vue.component('dashboard-map', {
             occurrencesForWaterVectorTilesLayer: null,
             biodiversityVectorTilesLayer: null,
 
-            maxRatsPerKmWaterway: 300, // Water map: maximum rats per km waterway, for the color scale. Scale is clamped, so higher value will be displayed as the max
+            maxRatsPerKmWaterway: 0.3, // Water map: maximum rats per km waterway, for the color scale. Scale is clamped, so higher value will be displayed as the max
             layerSwitchZoomLevel: 13, // Zoom level at which the aggregated occurrences layer is shown instead of the simple occurrences layer
             popup: new ol.Overlay({}),
             popover: null,
@@ -670,7 +670,7 @@ Vue.component('dashboard-map', {
         },
         colorScaleOccurrencesForWater: function () {
             return d3.scaleSequential(d3.interpolateCool)
-                .domain([1, this.maxRatsPerKmWaterway])
+                .domain([0, this.maxRatsPerKmWaterway])
                 .clamp(true);
         },
 
@@ -724,13 +724,13 @@ Vue.component('dashboard-map', {
                 const r = feature.properties_.rats_score;
                 const w = feature.properties_.water_score;
 
-                const ratsPerKmWaterway = w === 0 ? 0 : r / (w / 1000);
+                const ratsPerKmWaterway = w === 0 ? 0 : r / w;
 
                 const fillColorRgbString = vm.colorScaleOccurrencesForWater(ratsPerKmWaterway);
                 const fillColor = d3.color(fillColorRgbString);
                 const textColor = vm.legibleColor(fillColorRgbString);
 
-                const textValue = ratsPerKmWaterway.toFixed(2);
+                const textValue = ratsPerKmWaterway.toFixed(5);
 
                 return new ol.style.Style({
                     fill: new ol.style.Fill({
