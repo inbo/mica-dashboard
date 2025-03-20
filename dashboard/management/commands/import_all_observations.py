@@ -38,7 +38,18 @@ def build_gbif_predicate(country_codes: List[str], species_ids: List[int]) -> Di
 
 
 def extract_gbif_download_id_from_dwca(dwca: DwCAReader) -> str:
-    return dwca.metadata.find("dataset").find("alternateIdentifier").text
+    e = dwca.metadata.find("dataset").find("alternateIdentifier")
+    # As of 2025-03-13, GBIF has changed the field name...
+    if e is not None:
+        return e.text
+    else:
+        return (
+            dwca.metadata.find("additionalMetadata")
+            .find("metadata")
+            .find("gbif")
+            .find("citation")
+            .get("identifier")
+        )
 
 
 def import_single_occurrence(row: CoreRow, current_data_import: DataImport):
