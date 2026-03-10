@@ -117,7 +117,13 @@ def import_single_occurrence(row: CoreRow, current_data_import: DataImport):
         dataset_contains_only_catches = (
             dataset.gbif_id in settings.GBIF_CATCHES_DATASET_KEY
         )
-        record_flagged_as_catch = row.data[qn("samplingProtocol")] == "rat trap"
+        sampling_protocol = row.data[qn("samplingProtocol")].lower()
+        event_type = row.data[qn("eventType")].lower()
+        record_flagged_as_catch = (
+            sampling_protocol == "rat trap"
+            or sampling_protocol.startswith("catch")
+            or event_type == "trap"
+        )
 
         Occurrence.objects.create(
             gbif_id=int(row.data["http://rs.gbif.org/terms/1.0/gbifID"]),
