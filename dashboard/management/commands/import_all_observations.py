@@ -118,7 +118,7 @@ def import_single_occurrence(row: CoreRow, current_data_import: DataImport):
             dataset.gbif_id in settings.GBIF_CATCHES_DATASET_KEY
         )
         sampling_protocol = row.data[qn("samplingProtocol")].lower()
-        event_type = row.data[qn("eventType")].lower()
+        event_type = row.data.get("http://rs.tdwg.org/dwc/terms/eventType", "").lower()
         record_flagged_as_catch = (
             sampling_protocol == "rat trap"
             or sampling_protocol.startswith("catch")
@@ -193,47 +193,48 @@ class Command(BaseCommand):
 
         self.stdout.write("We'll put the website in maintenance mode during the import")
         set_maintenance_mode(True)
-        with transaction.atomic():
-            transaction.on_commit(self.flag_transaction_as_successful)
+        try:
+            with transaction.atomic():
+                transaction.on_commit(self.flag_transaction_as_successful)
 
-            current_data_import = DataImport.objects.create(
-                start=timezone.now(), gbif_predicate=gbif_predicate
-            )
-            self.stdout.write(
-                f"Created a new DataImport object: #{current_data_import.pk}"
-            )
-
-            with DwCAReader(source_data_path) as dwca:
-                current_data_import.set_gbif_download_id(
-                    extract_gbif_download_id_from_dwca(dwca)
+                current_data_import = DataImport.objects.create(
+                    start=timezone.now(), gbif_predicate=gbif_predicate
+                )
+                self.stdout.write(
+                    f"Created a new DataImport object: #{current_data_import.pk}"
                 )
 
-                self._import_all_observations_from_dwca(dwca, current_data_import)
+                with DwCAReader(source_data_path) as dwca:
+                    current_data_import.set_gbif_download_id(
+                        extract_gbif_download_id_from_dwca(dwca)
+                    )
 
-            self.stdout.write(
-                "All occurrences imported, now deleting occurrences linked to previous data imports..."
-            )
+                    self._import_all_observations_from_dwca(dwca, current_data_import)
 
-            # 4. Remove previous observations
-            Occurrence.objects.exclude(data_import=current_data_import).delete()
+                self.stdout.write(
+                    "All occurrences imported, now deleting occurrences linked to previous data imports..."
+                )
 
-            # 5. Remove unused species entries
-            Species.objects.filter(occurrence__isnull=True).delete()
+                # 4. Remove previous observations
+                Occurrence.objects.exclude(data_import=current_data_import).delete()
 
-            # 4. Finalize the DataImport object
-            self.stdout.write("Updating the DataImport object")
-            current_data_import.complete()
-            self.stdout.write("Done.")
+                # 5. Remove unused species entries
+                Species.objects.filter(occurrence__isnull=True).delete()
 
-        self.stdout.write("Leaving maintenance mode.")
-        set_maintenance_mode(False)
+                # 4. Finalize the DataImport object
+                self.stdout.write("Updating the DataImport object")
+                current_data_import.complete()
+                self.stdout.write("Done.")
 
-        self.stdout.write("Sending email report")
-        if self.transaction_was_successful:
-            pass
-        else:
-            # Report error? Send email?
-            pass
+            self.stdout.write("Sending email report")
+            if self.transaction_was_successful:
+                pass
+            else:
+                # Report error? Send email?
+                pass
+        finally:
+            self.stdout.write("Leaving maintenance mode.")
+            set_maintenance_mode(False)
 
     def _import_all_observations_from_dwca(
         self, dwca: DwCAReader, current_data_import: DataImport
