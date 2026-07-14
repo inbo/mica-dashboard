@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: deploy
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@068c0c7a4e59a5ae12fb7cb454b05735d830c82b # master
         with:
           host: ${{ secrets.UAT_SERVER_HOST }}
           username: ${{ secrets.UAT_SERVER_USERNAME }}
