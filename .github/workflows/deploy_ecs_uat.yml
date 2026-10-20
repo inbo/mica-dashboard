@@ -1,0 +1,45 @@
+name: Build and deploy on UAT (AWS ECS)
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: deploy-ecs-uat
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build image
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: inbo/action-aws-build-ecr-container@9fc35868e2d33144dbbb4d98a34e3c644dbf806e # v1.5
+        with:
+          repo-name: inbo-mica-backend
+          version-tag: ${{ github.sha }}
+          aws-ecr-role: ${{ secrets.AWS_ASSUME_ROLE_ARN_ECR }}
+          aws-region: eu-west-1
+          # Back to 'true' after the Django upgrade
+          scan-fail: 'false'
+
+  deploy:
+    name: Deploy on UAT
+    needs: build
+    runs-on: ubuntu-latest
+    environment: uat
+    steps:
+      - uses: inbo/action-aws-deploy-to-ecs@b60c62e066e903b055255163edf350c1f1ceb2a9 # v1.5
+        with:
+          repo-name: inbo-mica-backend
+          ecs-cluster-name: inbo-mica-cluster
+          ecs-service-name: django-service
+          image-tag: ${{ github.sha }}
+          environment: uat
+          aws-ecr-role: ${{ secrets.AWS_ASSUME_ROLE_ARN_ECR }}
+          aws-ecs-role: ${{ secrets.AWS_IAM_ROLE_ARN }}
+          aws-region: eu-west-1

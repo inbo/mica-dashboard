@@ -1,0 +1,33 @@
+name: Deploy on PROD (AWS ECS)
+on:
+  workflow_dispatch:
+    inputs:
+      image-tag:
+        description: Commit SHA of an image that was deployed on UAT (empty = the commit this workflow runs on)
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: deploy-ecs-prod
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy on PROD
+    runs-on: ubuntu-latest
+    environment: prod
+    steps:
+      - uses: inbo/action-aws-deploy-to-ecs@b60c62e066e903b055255163edf350c1f1ceb2a9 # v1.5
+        with:
+          repo-name: inbo-mica-backend
+          ecs-cluster-name: inbo-mica-cluster
+          ecs-service-name: django-service
+          image-tag: ${{ inputs.image-tag || github.sha }}
+          environment: prod
+          aws-ecr-role: ${{ secrets.AWS_ASSUME_ROLE_ARN_ECR }}
+          aws-ecs-role: ${{ secrets.AWS_IAM_ROLE_ARN }}
+          aws-region: eu-west-1
