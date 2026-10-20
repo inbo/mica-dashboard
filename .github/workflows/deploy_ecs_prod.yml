@@ -1,0 +1,25 @@
+name: Deploy on PROD (AWS ECS)
+on:
+  workflow_dispatch:
+    inputs:
+      image-tag:
+        description: Commit SHA of an image that was deployed on UAT (empty = the commit this workflow runs on)
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: deploy-ecs-prod
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy on PROD
+    uses: ./.github/workflows/deploy_ecs.yml
+    with:
+      environment: prod
+      image-tag: ${{ inputs.image-tag || github.sha }}
+    secrets: inherit

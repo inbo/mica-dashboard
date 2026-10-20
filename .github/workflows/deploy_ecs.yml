@@ -1,0 +1,82 @@
+name: Deploy on AWS ECS
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: GitHub environment and image tag that ECS runs (uat or prod)
+        required: true
+        type: string
+      image-tag:
+        description: Commit SHA of the image to deploy
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  AWS_REGION: eu-west-1
+  ECR_REPOSITORY: inbo-mica-backend
+  ECS_CLUSTER: inbo-mica-cluster
+  ECS_SERVICE: django-service
+
+jobs:
+  deploy:
+    name: Deploy on ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: Assume the ECR role
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ secrets.AWS_ASSUME_ROLE_ARN_ECR }}
+          role-session-name: github-action-${{ github.run_id }}-ecr
+          aws-region: ${{ env.AWS_REGION }}
+
+      # ECS runs the image with the tag uat or prod (see inbo-aws-mica-terraform)
+      - name: Tag the image as ${{ inputs.environment }}
+        env:
+          SOURCE_TAG: ${{ inputs.image-tag }}
+          TARGET_TAG: ${{ inputs.environment }}
+        run: |
+          if [[ ! "$SOURCE_TAG" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::image-tag must be a full commit SHA, got '$SOURCE_TAG'"
+            exit 1
+          fi
+
+          source_digest=$(aws ecr describe-images --repository-name "$ECR_REPOSITORY" \
+            --image-ids imageTag="$SOURCE_TAG" --query 'imageDetails[0].imageDigest' --output text)
+          target_digest=$(aws ecr describe-images --repository-name "$ECR_REPOSITORY" \
+            --image-ids imageTag="$TARGET_TAG" --query 'imageDetails[0].imageDigest' --output text 2>/dev/null || true)
+
+          if [[ "$source_digest" == "$target_digest" ]]; then
+            echo "$TARGET_TAG already points to $SOURCE_TAG ($source_digest)"
+            exit 0
+          fi
+
+          image=$(aws ecr batch-get-image --repository-name "$ECR_REPOSITORY" --image-ids imageTag="$SOURCE_TAG" \
+            --accepted-media-types application/vnd.oci.image.manifest.v1+json application/vnd.docker.distribution.manifest.v2+json \
+            --query 'images[0]' --output json)
+          aws ecr put-image --repository-name "$ECR_REPOSITORY" --image-tag "$TARGET_TAG" \
+            --image-manifest "$(jq -r .imageManifest <<< "$image")" \
+            --image-manifest-media-type "$(jq -r .imageManifestMediaType <<< "$image")" > /dev/null
+          echo "Tagged $SOURCE_TAG ($source_digest) as $TARGET_TAG"
+
+      - name: Assume the deployment role
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ secrets.AWS_IAM_ROLE_ARN }}
+          role-session-name: github-action-${{ github.run_id }}-ecs
+          aws-region: ${{ env.AWS_REGION }}
+
+      # Also when the tag did not change, so a rerun always restarts the service
+      - name: Restart the ECS service
+        run: |
+          deployment_id=$(aws ecs update-service --cluster "$ECS_CLUSTER" --service "$ECS_SERVICE" \
+            --force-new-deployment --query 'service.deployments[0].id' --output text)
+          echo "Started deployment $deployment_id of $ECS_CLUSTER/$ECS_SERVICE"
